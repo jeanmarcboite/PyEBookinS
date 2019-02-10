@@ -4,6 +4,7 @@ from pprint import pprint
 
 from PySide2.QtGui import QPixmap, QIcon
 from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget, QListWidgetItem, QLabel
+from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from src.bookinfo.ebook import epub_info
 from src.bookinfo.goodreads import goodreads_from_isbn
@@ -23,7 +24,9 @@ class BookBrowserWidget(QWidget):
 
         self.setLayout(QHBoxLayout())
         self.layout().addWidget(list_widget)
-        self.layout().addWidget(stacked_widget)
+
+        right_widget = BookBrowserWidget.FileTreeWidget(files, bookIcon)
+        self.layout().addWidget(right_widget)
 
     @staticmethod
     def find_files(dirpath, extensions = Config.book_extensions):
@@ -64,3 +67,13 @@ class BookBrowserWidget(QWidget):
                 layout.addWidget(iconLabel, 0)
                 layout.addWidget(label, 1)
                 self.setLayout(layout)
+
+    class FileTreeWidget(QTreeWidget):
+        def __init__(self, files, bookIcon, **kwargs):
+            super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
+            header = QTreeWidgetItem(["Virtual folder tree","Comment"])
+            # self.setHeader(header)
+            root = QTreeWidgetItem(self, ["Untagged files"])
+            item1 = QTreeWidgetItem(root, ["child 1"])
+            item11 = QTreeWidgetItem(item1, ["child 1 1"])
+            item2 = QTreeWidgetItem(root, ["child 2"])
