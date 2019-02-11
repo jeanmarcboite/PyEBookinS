@@ -45,7 +45,3 @@ def goodreads_from_isbn(isbn):
                     goodreads[key][subkey] = field.text
         return goodreads
     return {}
-
-@memory.cache()
-def goodreads_from_file(filename):
-    return goodreads_from_isbn(isbn_from_file(filename))

@@ -18,6 +18,9 @@ class Config:
     goodreads.key = 'iKEG2vmZFhfw1GkHkMRk7w'
     goodreads.url = "https://www.goodreads.com/book/isbn/{}?key={}"
 
+    openlibrary = ConfigItem()
+    openlibrary.url = 'http://covers.openlibrary.org/b/ISBN/{}-L.jpg'
+
 if __name__ == '__main__':
     x = Config.cache
     x.z = 'z'

@@ -25,7 +25,7 @@ class BookBrowserWidget(QWidget):
         self.setLayout(QHBoxLayout())
         self.layout().addWidget(list_widget)
 
-        right_widget = BookBrowserWidget.FileTreeWidget(files, bookIcon)
+        right_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
         self.layout().addWidget(right_widget)
 
     @staticmethod
@@ -35,7 +35,15 @@ class BookBrowserWidget(QWidget):
             pattern = os.path.join(dirpath, '*.%s' %extension)
             files.extend(glob(pattern))
         return files
-
+    @staticmethod
+    def files_by(files, key):
+        authors = dict()
+        for file in files:
+            info = epub_info(file)
+            if info[key] not in authors.keys():
+                authors[info[key]] = []
+            authors[info[key]].append(info)
+        return authors
     @staticmethod
     def stacked_widget(files):
         widget = QStackedWidget()
@@ -50,7 +58,7 @@ class BookBrowserWidget(QWidget):
             super(BookBrowserWidget.FileListWidget, self).__init__(**kwargs)
             for file in files:
                 info = epub_info(file)
-                pprint(goodreads_from_isbn(info['isbn']))
+                # pprint(goodreads_from_isbn(info['isbn']))
                 widget = BookBrowserWidget.FileListWidget.ItemWidget(bookIcon, info['title'])
                 widgetItem = QListWidgetItem(self)
                 widgetItem.setSizeHint(widget.sizeHint())
@@ -71,9 +79,27 @@ class BookBrowserWidget(QWidget):
     class FileTreeWidget(QTreeWidget):
         def __init__(self, files, bookIcon, **kwargs):
             super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
-            header = QTreeWidgetItem(["Virtual folder tree","Comment"])
-            # self.setHeader(header)
-            root = QTreeWidgetItem(self, ["Untagged files"])
-            item1 = QTreeWidgetItem(root, ["child 1"])
-            item11 = QTreeWidgetItem(item1, ["child 1 1"])
-            item2 = QTreeWidgetItem(root, ["child 2"])
+            self.setColumnCount(1)
+            header = QTreeWidgetItem(["Author"])
+            self.setHeaderItem(header)
+            root = QTreeWidgetItem(self, ["Authors"])
+            root.setExpanded(True)
+            for name in files.keys():
+                name_item = QTreeWidgetItem(root, [name])
+                for file in files[name]:
+                    file_item = QTreeWidgetItem(name_item, [file['title']])
+                    pixmap = QPixmap()
+                    if 'cover_image' not in file.keys():
+                        pixmap = bookIcon
+                    else:
+                        pixmap = QPixmap()
+                        pixmap.loadFromData(file['cover_image'])
+
+#  af, ar, bg, bn, ca, cs, cy, da, de, el,
+#  en, es, et, fa, fi, fr, gu, he, hi, hr,
+#  hu, id, it, ja, kn, ko, lt, lv, mk, ml,
+#  mr, ne, nl, no, pa, pl, pt, ro, ru, sk,
+#  sl, so, sq, sv, sw, ta, te, th, tl, tr,
+#  uk, ur, vi, zh-cn, zh-tw
+                    pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file['language'][0]))
+                    file_item.setIcon(0, QIcon(pixmap))
