@@ -1,6 +1,7 @@
 import os
 from glob import glob
-from pprint import pprint
+from pprint import pformat
+from copy import copy
 
 from PySide2.QtGui import QPixmap, QIcon
 from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget, QListWidgetItem, QLabel
@@ -18,15 +19,34 @@ class BookBrowserWidget(QWidget):
         files = BookBrowserWidget.find_files(dirpath)
 
         bookIcon = QPixmap("../resources/icons/iconfinder_book_285636.png")
-        list_widget = BookBrowserWidget.FileListWidget(files, bookIcon)
-        stacked_widget = self.stacked_widget(files)
-        list_widget.currentRowChanged.connect(lambda i: stacked_widget.setCurrentIndex(i))
 
         self.setLayout(QHBoxLayout())
-        self.layout().addWidget(list_widget)
+        self.left_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
+        self.left_widget.selectionChanged = self.selectionChanged
+        self.layout().addWidget(self.left_widget)
 
-        right_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
-        self.layout().addWidget(right_widget)
+        self.right_widget = QWidget()
+        self.right_widget.setLayout(QHBoxLayout())
+        self.right_widget.layout().addWidget(QLabel('no selection'))
+        self.layout().addWidget(self.right_widget)
+
+    def clean(self):
+        while 1:
+            child = self.right_widget.layout().takeAt(0)
+            if not child:
+                break
+            child.widget().deleteLater()
+
+    def selectionChanged(self, new, old):
+        print(self.left_widget.currentItem())
+        try:
+            print(self.left_widget.currentItem().file['title'])
+            self.clean()
+            info = copy(self.left_widget.currentItem().file)
+            del info['cover_image']
+            self.right_widget.layout().addWidget(QLabel(pformat(info)))
+        except AttributeError:
+            pass
 
     @staticmethod
     def find_files(dirpath, extensions = Config.book_extensions):
@@ -77,6 +97,11 @@ class BookBrowserWidget(QWidget):
                 self.setLayout(layout)
 
     class FileTreeWidget(QTreeWidget):
+        class Item(QTreeWidgetItem):
+            def __init__(self, parent, file):
+                super(BookBrowserWidget.FileTreeWidget.Item, self).__init__(parent)
+                self.file = file
+                self.setText(0, file['title'])
         def __init__(self, files, bookIcon, **kwargs):
             super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
             self.setColumnCount(1)
@@ -87,7 +112,7 @@ class BookBrowserWidget(QWidget):
             for name in files.keys():
                 name_item = QTreeWidgetItem(root, [name])
                 for file in files[name]:
-                    file_item = QTreeWidgetItem(name_item, [file['title']])
+                    file_item = BookBrowserWidget.FileTreeWidget.Item(name_item, file)
                     pixmap = QPixmap()
                     if 'cover_image' not in file.keys():
                         pixmap = bookIcon
@@ -95,7 +120,7 @@ class BookBrowserWidget(QWidget):
                         pixmap = QPixmap()
                         pixmap.loadFromData(file['cover_image'])
 
-#  af, ar, bg, bn, ca, cs, cy, da, de, el,
+                     #  af, ar, bg, bn, ca, cs, cy, da, de, el,
 #  en, es, et, fa, fi, fr, gu, he, hi, hr,
 #  hu, id, it, ja, kn, ko, lt, lv, mk, ml,
 #  mr, ne, nl, no, pa, pl, pt, ro, ru, sk,
@@ -103,3 +128,11 @@ class BookBrowserWidget(QWidget):
 #  uk, ur, vi, zh-cn, zh-tw
                     pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file['language'][0]))
                     file_item.setIcon(0, QIcon(pixmap))
+
+
+        def selectionChanged(self, new, old):
+            print("selectionChanged:", new, old)
+            print(new.indexes())
+            print(self.currentItem().file)
+            print(self.selectedItems())
+
