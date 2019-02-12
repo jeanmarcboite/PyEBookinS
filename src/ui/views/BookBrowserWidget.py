@@ -3,8 +3,10 @@ from glob import glob
 from pprint import pformat
 from copy import copy
 
+from PySide2.QtCore import Qt
 from PySide2.QtGui import QPixmap, QIcon
-from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget, QListWidgetItem, QLabel, QScrollArea
+from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget, QListWidgetItem, QLabel, QScrollArea, \
+    QSplitter
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from src.bookinfo.ebook import epub_info
@@ -21,9 +23,12 @@ class BookBrowserWidget(QWidget):
         bookIcon = QPixmap("../resources/icons/iconfinder_book_285636.png")
 
         self.setLayout(QHBoxLayout())
+        splitter = QSplitter(Qt.Horizontal)
+        self.layout().addWidget(splitter)
+
         self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
         self.tree_widget.selectionChanged = self.selectionChanged
-        self.layout().addWidget(self.tree_widget)
+        splitter.addWidget(self.tree_widget)
 
         self.info_widget = QWidget()
         self.info_widget.setLayout(QHBoxLayout())
@@ -31,7 +36,7 @@ class BookBrowserWidget(QWidget):
         scroll_area = QScrollArea()
         scroll_area.setWidget(self.info_widget)
         scroll_area.setWidgetResizable(True)
-        self.layout().addWidget(scroll_area)
+        splitter.addWidget(scroll_area)
 
     def clean(self):
         while 1:
