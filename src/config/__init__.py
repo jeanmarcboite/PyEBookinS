@@ -19,7 +19,8 @@ class Config:
     goodreads.url = "https://www.goodreads.com/book/isbn/{}?key={}"
 
     openlibrary = ConfigItem()
-    openlibrary.url = 'http://covers.openlibrary.org/b/ISBN/{}-L.jpg'
+    openlibrary.cover_url = 'http://covers.openlibrary.org/b/ISBN/{}-L.jpg'
+    openlibrary.data_url = "https://openlibrary.org/api/books?bibkeys=ISBN:{}&format=json&jscmd=data"
 
 if __name__ == '__main__':
     x = Config.cache

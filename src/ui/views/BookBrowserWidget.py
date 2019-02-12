@@ -25,14 +25,14 @@ class BookBrowserWidget(QWidget):
         self.left_widget.selectionChanged = self.selectionChanged
         self.layout().addWidget(self.left_widget)
 
-        self.right_widget = QWidget()
-        self.right_widget.setLayout(QHBoxLayout())
-        self.right_widget.layout().addWidget(QLabel('no selection'))
-        self.layout().addWidget(self.right_widget)
+        self.info_widget = QWidget()
+        self.info_widget.setLayout(QHBoxLayout())
+        self.info_widget.layout().addWidget(QLabel('no selection'))
+        self.layout().addWidget(self.info_widget)
 
     def clean(self):
         while 1:
-            child = self.right_widget.layout().takeAt(0)
+            child = self.info_widget.layout().takeAt(0)
             if not child:
                 break
             child.widget().deleteLater()
@@ -44,7 +44,7 @@ class BookBrowserWidget(QWidget):
             self.clean()
             info = copy(self.left_widget.currentItem().file)
             del info['cover_image']
-            self.right_widget.layout().addWidget(QLabel(pformat(info)))
+            self.info_widget.layout().addWidget(QLabel(pformat(info)))
         except AttributeError:
             pass
 

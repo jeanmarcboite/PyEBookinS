@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 
+from src.bookinfo.goodreads import goodreads_from_isbn
 from src.bookinfo.isbn import isbn_from_words, isbn_cover
 from src.config import Config
 from ebooklib import epub, ITEM_DOCUMENT
@@ -66,6 +67,7 @@ def epub_info(path):
         info['author'] = ' '.join(list(map(lambda s: s.strip().capitalize(), reversed(info['author'].split(',')))))
 
     info['isbn'] = isbn_from_words(info['author'] + ' ' + info['title'])
+    info['goodreads'] = goodreads_from_isbn(info['isbn'])
     if 'cover_image' not in info.keys():
         info['cover_image'] = isbn_cover(info['isbn'], 'goodreads')
     documents = list(map(lambda item: item.get_body_content(),

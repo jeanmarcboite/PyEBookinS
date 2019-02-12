@@ -24,7 +24,7 @@ def isbn_cover(isbn, provider = 'OpenLibrary'):
         if google_cover:
             url = google_cover['thumbnail']
     if url is None:
-        url = Config.openlibrary.url.format(isbn)
+        url = Config.openlibrary.cover_url.format(isbn)
     if url:
         try:
             return urllib.request.urlopen(url).read()
