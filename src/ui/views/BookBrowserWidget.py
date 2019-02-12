@@ -13,22 +13,18 @@ from src.bookinfo.ebook import epub_info
 from src.bookinfo.goodreads import goodreads_from_isbn
 from src.config import Config
 
-class BookBrowserWidget(QWidget):
+class BookBrowserWidget(QSplitter):
 
     def __init__(self, dirpath, parent=None):
-        super(BookBrowserWidget, self).__init__(parent)
+        super(BookBrowserWidget, self).__init__(Qt.Horizontal, parent)
 
         files = BookBrowserWidget.find_files(dirpath)
 
         bookIcon = QPixmap("../resources/icons/iconfinder_book_285636.png")
 
-        self.setLayout(QHBoxLayout())
-        splitter = QSplitter(Qt.Horizontal)
-        self.layout().addWidget(splitter)
-
         self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
         self.tree_widget.selectionChanged = self.selectionChanged
-        splitter.addWidget(self.tree_widget)
+        self.addWidget(self.tree_widget)
 
         self.info_widget = QWidget()
         self.info_widget.setLayout(QHBoxLayout())
@@ -36,7 +32,7 @@ class BookBrowserWidget(QWidget):
         scroll_area = QScrollArea()
         scroll_area.setWidget(self.info_widget)
         scroll_area.setWidgetResizable(True)
-        splitter.addWidget(scroll_area)
+        self.addWidget(scroll_area)
 
     def clean(self):
         while 1:
