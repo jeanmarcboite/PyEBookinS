@@ -4,7 +4,7 @@ from pprint import pformat
 from copy import copy
 
 from PySide2.QtGui import QPixmap, QIcon
-from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget, QListWidgetItem, QLabel
+from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget, QListWidgetItem, QLabel, QScrollArea
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from src.bookinfo.ebook import epub_info
@@ -21,14 +21,17 @@ class BookBrowserWidget(QWidget):
         bookIcon = QPixmap("../resources/icons/iconfinder_book_285636.png")
 
         self.setLayout(QHBoxLayout())
-        self.left_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
-        self.left_widget.selectionChanged = self.selectionChanged
-        self.layout().addWidget(self.left_widget)
+        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
+        self.tree_widget.selectionChanged = self.selectionChanged
+        self.layout().addWidget(self.tree_widget)
 
         self.info_widget = QWidget()
         self.info_widget.setLayout(QHBoxLayout())
         self.info_widget.layout().addWidget(QLabel('no selection'))
-        self.layout().addWidget(self.info_widget)
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(self.info_widget)
+        scroll_area.setWidgetResizable(True)
+        self.layout().addWidget(scroll_area)
 
     def clean(self):
         while 1:
@@ -38,11 +41,11 @@ class BookBrowserWidget(QWidget):
             child.widget().deleteLater()
 
     def selectionChanged(self, new, old):
-        print(self.left_widget.currentItem())
+        print(self.tree_widget.currentItem())
         try:
-            print(self.left_widget.currentItem().file['title'])
+            print(self.tree_widget.currentItem().file['title'])
             self.clean()
-            info = copy(self.left_widget.currentItem().file)
+            info = copy(self.tree_widget.currentItem().file)
             del info['cover_image']
             self.info_widget.layout().addWidget(QLabel(pformat(info)))
         except AttributeError:
