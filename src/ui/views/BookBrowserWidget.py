@@ -26,29 +26,37 @@ class BookBrowserWidget(QSplitter):
         self.tree_widget.selectionChanged = self.selectionChanged
         self.addWidget(self.tree_widget)
 
-        self.info_widget = QWidget()
-        self.info_widget.setLayout(QHBoxLayout())
-        self.info_widget.layout().addWidget(QLabel('no selection'))
+        self.info_widget = BookBrowserWidget.InfoWidget()
         scroll_area = QScrollArea()
         scroll_area.setWidget(self.info_widget)
         scroll_area.setWidgetResizable(True)
         self.addWidget(scroll_area)
 
-    def clean(self):
-        while 1:
-            child = self.info_widget.layout().takeAt(0)
-            if not child:
-                break
-            child.widget().deleteLater()
+    class InfoWidget(QWidget):
+        def __init__(self, parent=None):
+            super(BookBrowserWidget.InfoWidget, self).__init__(parent)
+            self.setLayout(QHBoxLayout())
+            self.layout().addWidget(QLabel('no selection'))
+
+        def clean(self):
+            while True:
+                child = self.layout().takeAt(0)
+                if child:
+                    child.widget().deleteLater()
+                else:
+                    break
+
+        def setWidget(self, widget):
+            self.clean()
+            self.layout().addWidget(widget)
 
     def selectionChanged(self, new, old):
         print(self.tree_widget.currentItem())
         try:
             print(self.tree_widget.currentItem().file['title'])
-            self.clean()
             info = copy(self.tree_widget.currentItem().file)
             del info['cover_image']
-            self.info_widget.layout().addWidget(QLabel(pformat(info)))
+            self.info_widget.setWidget(QLabel(pformat(info)))
         except AttributeError:
             pass
 
@@ -106,6 +114,7 @@ class BookBrowserWidget(QSplitter):
                 super(BookBrowserWidget.FileTreeWidget.Item, self).__init__(parent)
                 self.file = file
                 self.setText(0, file['title'])
+
         def __init__(self, files, bookIcon, **kwargs):
             super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
             self.setColumnCount(1)
@@ -132,11 +141,3 @@ class BookBrowserWidget(QSplitter):
 #  uk, ur, vi, zh-cn, zh-tw
                     pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file['language'][0]))
                     file_item.setIcon(0, QIcon(pixmap))
-
-
-        def selectionChanged(self, new, old):
-            print("selectionChanged:", new, old)
-            print(new.indexes())
-            print(self.currentItem().file)
-            print(self.selectedItems())
-
