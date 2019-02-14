@@ -11,6 +11,7 @@ from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from src.bookinfo.ebook import epub_info
 from src.bookinfo.goodreads import goodreads_from_isbn
+from src.bookinfo.librarything import librarything_from_isbn
 from src.config import Config
 
 class BookBrowserWidget(QSplitter):
@@ -20,9 +21,9 @@ class BookBrowserWidget(QSplitter):
 
         files = BookBrowserWidget.find_files(dirpath)
 
-        bookIcon = QPixmap("../resources/icons/iconfinder_book_285636.png")
+        default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
 
-        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), bookIcon)
+        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), default_pixmap)
         self.tree_widget.selectionChanged = self.selectionChanged
         self.addWidget(self.tree_widget)
 
@@ -54,6 +55,7 @@ class BookBrowserWidget(QSplitter):
         print(self.tree_widget.currentItem())
         try:
             print(self.tree_widget.currentItem().file['title'])
+            print(librarything_from_isbn(self.tree_widget.currentItem().file['isbn']))
             info = copy(self.tree_widget.currentItem().file)
             del info['cover_image']
             self.info_widget.setWidget(QLabel(pformat(info)))
@@ -76,14 +78,6 @@ class BookBrowserWidget(QSplitter):
                 authors[info[key]] = []
             authors[info[key]].append(info)
         return authors
-    @staticmethod
-    def stacked_widget(files):
-        widget = QStackedWidget()
-        for file in files:
-            #widget.addWidget(EPubWidget(book_path=file))
-            pass
-
-        return widget
 
     class FileListWidget(QListWidget):
         def __init__(self, files, bookIcon, **kwargs):
@@ -115,7 +109,7 @@ class BookBrowserWidget(QSplitter):
                 self.file = file
                 self.setText(0, file['title'])
 
-        def __init__(self, files, bookIcon, **kwargs):
+        def __init__(self, files, default_pixmap, **kwargs):
             super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
             self.setColumnCount(1)
             header = QTreeWidgetItem(["Author"])
@@ -128,7 +122,7 @@ class BookBrowserWidget(QSplitter):
                     file_item = BookBrowserWidget.FileTreeWidget.Item(name_item, file)
                     pixmap = QPixmap()
                     if 'cover_image' not in file.keys():
-                        pixmap = bookIcon
+                        pixmap = default_pixmap
                     else:
                         pixmap = QPixmap()
                         pixmap.loadFromData(file['cover_image'])

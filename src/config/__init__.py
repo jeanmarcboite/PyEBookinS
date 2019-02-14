@@ -22,6 +22,11 @@ class Config:
     openlibrary.cover_url = 'http://covers.openlibrary.org/b/ISBN/{}-L.jpg'
     openlibrary.data_url = "https://openlibrary.org/api/books?bibkeys=ISBN:{}&format=json&jscmd=data"
 
+    librarything = ConfigItem()
+    # http: // www.librarything.com / services / rest / 1.1 /?method = librarything.ck.getwork & id = 1060 & apikey = d231aa37c9b4f5d304a60a3d0ad1dad4
+    librarything.getwork='http://www.librarything.com/services/rest/1.1/?method=librarything.ck.getwork&isbn={}&apikey={}'
+    librarything.key='3a88914e5ef7d402e75bdbdcda333f4f'
+
 if __name__ == '__main__':
     x = Config.cache
     x.z = 'z'
