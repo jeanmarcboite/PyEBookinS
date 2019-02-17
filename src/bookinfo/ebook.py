@@ -59,8 +59,7 @@ def epub_info(path):
     for (to_key, from_key) in {
         'creation_date': 'date',
         'author': 'creator',
-        'language_in_epub': 'language',
-        'ISBN': 'source'}.items():
+        'language_in_epub': 'language'}.items():
         info[to_key] = get_str(metadata['DC'][from_key])
 
     if info['author'].isupper() and len(info['author'].split()) == 2:
