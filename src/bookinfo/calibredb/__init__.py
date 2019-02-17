@@ -1,7 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .books import Author, Book
+from .tables import Author, Book
+
+db_uri='sqlite:///metadata.db'
 
 def get_books(db_uri):
     engine = create_engine(db_uri)
