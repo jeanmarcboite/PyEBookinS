@@ -34,7 +34,7 @@ class BookInfo(dict):
         self.filename = filename
 
 @memory.cache()
-def epub_info(path):
+def epub_info(path, calibre_db=None):
     fields = {
         'DC': ['language', 'title', 'creator', 'identifier', 'source', 'subject',
                'contributor', 'publisher', 'rights', 'coverage', 'date', 'description']
@@ -72,4 +72,8 @@ def epub_info(path):
     documents = list(map(lambda item: item.get_body_content(),
                          list(book.get_items_of_type(ITEM_DOCUMENT))))
     info['language'] = [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
+
+    if calibre_db:
+        info['calibre'] = calibre_db[info['isbn']]
+
     return info

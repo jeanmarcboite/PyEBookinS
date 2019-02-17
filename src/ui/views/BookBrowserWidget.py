@@ -13,6 +13,7 @@ from src.bookinfo.ebook import epub_info
 from src.bookinfo.goodreads import goodreads_from_isbn
 from src.bookinfo.librarything import librarything_from_isbn
 from src.config import Config
+from src.bookinfo.calibredb import *
 
 class BookBrowserWidget(QSplitter):
 
@@ -21,9 +22,15 @@ class BookBrowserWidget(QSplitter):
 
         files = BookBrowserWidget.find_files(dirpath)
 
+        db = os.path.join(dirpath, 'metadata.db')
+        calibre_db = None
+        if db:
+            calibre_db = CalibreDB(database='sqlite:///' + db)
+
+
         default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
 
-        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author'), default_pixmap)
+        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db), default_pixmap)
         self.tree_widget.selectionChanged = self.selectionChanged
         self.addWidget(self.tree_widget)
 
@@ -70,21 +77,21 @@ class BookBrowserWidget(QSplitter):
             files.extend(glob(pattern))
         return files
     @staticmethod
-    def files_by(files, key):
-        authors = dict()
+    def files_by(files, key, calibre_db=None):
+        by = dict()
         for file in files:
-            info = epub_info(file)
-            if info[key] not in authors.keys():
-                authors[info[key]] = []
-            authors[info[key]].append(info)
-        return authors
+            info = epub_info(file, calibre_db)
+            if info[key] not in by.keys():
+                by[info[key]] = []
+            by[info[key]].append(info)
+        return by
 
     class FileListWidget(QListWidget):
-        def __init__(self, files, bookIcon, **kwargs):
+        def __init__(self, files, calibre_db, bookIcon, **kwargs):
             super(BookBrowserWidget.FileListWidget, self).__init__(**kwargs)
             for file in files:
-                info = epub_info(file)
-                # pprint(goodreads_from_isbn(info['isbn']))
+                info = epub_info(file, calibre_db)
+                info['calibre'] = calibre_db[info['isbn']]
                 widget = BookBrowserWidget.FileListWidget.ItemWidget(bookIcon, info['title'])
                 widgetItem = QListWidgetItem(self)
                 widgetItem.setSizeHint(widget.sizeHint())
@@ -109,7 +116,7 @@ class BookBrowserWidget(QSplitter):
                 self.file = file
                 self.setText(0, file['title'])
 
-        def __init__(self, files, default_pixmap, **kwargs):
+        def __init__(self, files, calibre_db, default_pixmap, **kwargs):
             super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
             self.setColumnCount(1)
             header = QTreeWidgetItem(["Author"])
