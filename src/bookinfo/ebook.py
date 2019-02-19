@@ -65,7 +65,9 @@ def epub_info(path, calibre_db=None):
     if info['author'].isupper() and len(info['author'].split()) == 2:
         info['author'] = ' '.join(list(map(lambda s: s.strip().capitalize(), reversed(info['author'].split(',')))))
 
-    info['isbn'] = isbn_from_words(info['author'] + ' ' + info['title'])
+    author = ', '.join(list(reversed(info['author'].split())))
+
+    info['isbn'] = isbn_from_words('{} {}'.format(info['author'], info['title']))
     info['goodreads'] = goodreads_from_isbn(info['isbn'])
     if 'cover_image' not in info.keys():
         info['cover_image'] = isbn_cover(info['isbn'], 'goodreads')

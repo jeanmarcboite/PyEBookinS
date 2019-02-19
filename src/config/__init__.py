@@ -11,6 +11,8 @@ class Config:
     application_name = 'BookinS'
     cache = ConfigItem()
     cache.directory = '~/.cache'
+    fcache = ConfigItem()
+    fcache.isbn = '/home/box/.cache/fcache/isbn_from_words'
     cache.isbn = '/home/box/.cache/isbn/isbn_from_words'
     cache.verbose = 1
     book_extensions = ['epub']

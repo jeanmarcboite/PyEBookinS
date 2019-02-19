@@ -22,9 +22,9 @@ class BookBrowserWidget(QSplitter):
 
         files = BookBrowserWidget.find_files(dirpath)
 
-        db = os.path.join(dirpath, 'metadata.db')
+        db = os.path.join(dirpath, 'no-metadata.db')
         calibre_db = None
-        if db:
+        if os.path.isfile(db):
             calibre_db = CalibreDB(database='sqlite:///' + db)
 
 
@@ -116,7 +116,7 @@ class BookBrowserWidget(QSplitter):
                 self.file = file
                 self.setText(0, file['title'])
 
-        def __init__(self, files, calibre_db, default_pixmap, **kwargs):
+        def __init__(self, files, default_pixmap, **kwargs):
             super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
             self.setColumnCount(1)
             header = QTreeWidgetItem(["Author"])

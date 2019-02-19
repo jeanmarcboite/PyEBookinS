@@ -36,6 +36,6 @@ class CalibreDB(dict):
                 pass
 
             if len(isbn) < 10:
-                isbn = isbn_from_words(book.title)
+                isbn = isbn_from_words('{} {}'.format(book.author_sort, book.title))
 
             self[isbn] = book
