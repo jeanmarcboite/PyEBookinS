@@ -3,9 +3,12 @@ import requests
 import json
 import xml.etree.ElementTree as ElementTree
 from joblib import Memory
+from config import AppState
 # https://openlibrary.org/api/books?bibkeys=ISBN:0201558025&format=json&jscmd=data
 
-memory = Memory(Config.cache.directory, verbose=Config.cache.verbose)
+config = AppState().config
+memory = Memory(config['cache']['directory'].as_filename(),
+                verbose=config['cache']['verbose'].get())
 
 @memory.cache()
 def ebook_openlibrary_response(isbn):

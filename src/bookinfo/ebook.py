@@ -2,12 +2,16 @@ from bs4 import BeautifulSoup
 
 from src.bookinfo.goodreads import goodreads_from_isbn
 from src.bookinfo.isbn import isbn_from_words, isbn_cover
-from src.config import Config
 from ebooklib import epub, ITEM_DOCUMENT
 from joblib import Memory
 from langdetect import detect
 
-memory = Memory(Config.cache.directory, verbose=Config.cache.verbose)
+from config import AppState
+from src.bookinfo.librarything import librarything_from_isbn
+
+config = AppState().config
+memory = Memory(config['cache']['directory'].as_filename(),
+                verbose=config['cache']['verbose'].get())
 
 
 def _detect_language(html):
@@ -69,6 +73,8 @@ def epub_info(path, calibre_db=None):
 
     info['isbn'] = isbn_from_words('{} {}'.format(info['author'], info['title']))
     info['goodreads'] = goodreads_from_isbn(info['isbn'])
+    info['librarything'] = librarything_from_isbn(info['isbn'])
+
     if 'cover_image' not in info.keys():
         info['cover_image'] = isbn_cover(info['isbn'], 'goodreads')
     documents = list(map(lambda item: item.get_body_content(),

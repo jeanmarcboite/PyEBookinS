@@ -1,0 +1,26 @@
+application_name: BookinS
+cache:
+  directory: ~/.cache
+  verbose: True
+fcache:
+  isbn: True
+calibre_db:
+  ~/Dropbox/CalibreLibraryi
+database:
+  ebooks
+ebook_extensions: ["epub"]
+
+goodreads:
+  key: 'iKEG2vmZFhfw1GkHkMRk7w'
+  url: "https://www.goodreads.com/book/isbn/{}?key={}"
+
+openlibrary:
+  cover_url: 'http://covers.openlibrary.org/b/ISBN/{}-L.jpg'
+  data_url: "https://openlibrary.org/api/books?bibkeys=ISBN:{}&format=json&jscmd=data"
+
+librarything:
+  getwork: 'http://www.librarything.com/services/rest/1.1/?method=librarything.ck.getwork&isbn={}&apikey={}'
+  key: '3a88914e5ef7d402e75bdbdcda333f4f'
+
+anchor: &anchor default_name
+alias: *anchor

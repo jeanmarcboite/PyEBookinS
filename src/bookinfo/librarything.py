@@ -1,16 +1,19 @@
-from src.config import Config
 import requests
 from joblib import Memory
+from config import AppState
 
-memory = Memory(Config.cache.directory, verbose=Config.cache.verbose)
+config = AppState().config
+memory = Memory(config['cache']['directory'].as_filename(),
+                verbose=config['cache']['verbose'].get())
 
 @memory.cache()
 def ebook_librarything_response(isbn):
-    url = Config.librarything.getwork.format(isbn, Config.librarything.key)
+    url = config['librarything']['getwork'].as_str().format(isbn,
+                                                            config['librarything']['key'].as_str())
     print(url)
     return requests.get(url)
-@memory.cache()
+
 def librarything_from_isbn(isbn):
     librarything_response = ebook_librarything_response(isbn)
     if librarything_response.ok:
-        print(librarything_response.content)
+        return librarything_response.content

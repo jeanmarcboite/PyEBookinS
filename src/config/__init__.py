@@ -6,7 +6,7 @@ class ConfigItem(object):
         pass
 
 
-class Config:
+class NoConfig:
     project_directory = os.path.realpath('..')
     application_name = 'BookinS'
     cache = ConfigItem()
@@ -30,10 +30,20 @@ class Config:
     librarything.getwork='http://www.librarything.com/services/rest/1.1/?method=librarything.ck.getwork&isbn={}&apikey={}'
     librarything.key='3a88914e5ef7d402e75bdbdcda333f4f'
 
-if __name__ == '__main__':
+if __name__ == '__default__':
     x = Config.cache
     x.z = 'z'
     print(x.z)
     print(x.directory)
     x.directory = 'Z'
     print(Config.cache.directory)
+
+
+if __name__ == '__main__':
+    x = Config()
+    x.key = 'value'
+    print(x)
+    print(x.key)
+    y = Config()
+    print(y.key)
+    print(Config().key)

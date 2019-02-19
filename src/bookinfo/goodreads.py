@@ -1,9 +1,12 @@
-from src.config import Config
 import requests
 import xml.etree.ElementTree as ElementTree
 from joblib import Memory
+from config import AppState
 
-memory = Memory(Config.cache.directory, verbose=Config.cache.verbose)
+config = AppState().config
+memory = Memory(config['cache']['directory'].as_filename(),
+                verbose=config['cache']['verbose'].get())
+
 
 class Goodreads():
     attributes = {
@@ -28,7 +31,8 @@ class Goodreads():
 
 @memory.cache()
 def ebook_goodreads_response(isbn):
-    url = Config.goodreads.url.format(isbn, Config.goodreads.key)
+    url = config['goodreads']['url'].as_str().format(isbn,
+                                                config['goodreads']['key'].get())
     return requests.get(url)
 
 @memory.cache()

@@ -12,7 +12,7 @@ from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 from src.bookinfo.ebook import epub_info
 from src.bookinfo.goodreads import goodreads_from_isbn
 from src.bookinfo.librarything import librarything_from_isbn
-from src.config import Config
+from config import AppState
 from src.bookinfo.calibredb import *
 
 class BookBrowserWidget(QSplitter):
@@ -61,7 +61,7 @@ class BookBrowserWidget(QSplitter):
     def selectionChanged(self, new, old):
         print(self.tree_widget.currentItem())
         try:
-            print(self.tree_widget.currentItem().file['title'])
+            print('select ', self.tree_widget.currentItem().file['title'])
             print(librarything_from_isbn(self.tree_widget.currentItem().file['isbn']))
             info = copy(self.tree_widget.currentItem().file)
             del info['cover_image']
@@ -70,10 +70,13 @@ class BookBrowserWidget(QSplitter):
             pass
 
     @staticmethod
-    def find_files(dirpath, extensions = Config.book_extensions):
+    def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
         files = []
         for extension in extensions:
-            pattern = os.path.join(dirpath, '*.%s' %extension)
+            print(extension)
+            print(type(extension))
+            print('*.{}'.format(extension))
+            pattern = os.path.join(dirpath, '*.' + extension)
             files.extend(glob(pattern))
         return files
     @staticmethod
