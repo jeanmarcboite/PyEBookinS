@@ -30,15 +30,15 @@ class Goodreads():
 
 
 @memory.cache()
-def ebook_goodreads_response(isbn):
-    url = config['goodreads']['url'].as_str().format(isbn,
+def ebook_goodreads_response(isbn, id_type):
+    url = config['goodreads']['url'][id_type].as_str().format(isbn,
                                                 config['goodreads']['key'].get())
     return requests.get(url)
 
-@memory.cache()
-def goodreads_from_isbn(isbn):
-    goodreads_response = ebook_goodreads_response(isbn)
+def goodreads_from(goodreads_response):
     if goodreads_response.ok:
+        with open('/home/box/tmp/goodreads', 'w') as output_file:
+            output_file.write(goodreads_response.content.decode("utf-8") )
         root = ElementTree.fromstring(goodreads_response.content)
         goodreads = {}
         for key in Goodreads.attributes.keys():
@@ -49,3 +49,8 @@ def goodreads_from_isbn(isbn):
                     goodreads[key][subkey] = field.text
         return goodreads
     return {}
+
+def goodreads_from_isbn(isbn):
+    return goodreads_from(ebook_goodreads_response(isbn, 'isbn'))
+def goodreads_from_id(id):
+    return goodreads_from(ebook_goodreads_response(id, 'id'))

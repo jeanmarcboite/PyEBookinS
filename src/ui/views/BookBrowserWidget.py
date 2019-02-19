@@ -59,10 +59,8 @@ class BookBrowserWidget(QSplitter):
             self.layout().addWidget(widget)
 
     def selectionChanged(self, new, old):
-        print(self.tree_widget.currentItem())
         try:
             print('select ', self.tree_widget.currentItem().file['title'])
-            print(librarything_from_isbn(self.tree_widget.currentItem().file['isbn']))
             info = copy(self.tree_widget.currentItem().file)
             del info['cover_image']
             self.info_widget.setWidget(QLabel(pformat(info)))
@@ -73,9 +71,6 @@ class BookBrowserWidget(QSplitter):
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
         files = []
         for extension in extensions:
-            print(extension)
-            print(type(extension))
-            print('*.{}'.format(extension))
             pattern = os.path.join(dirpath, '*.' + extension)
             files.extend(glob(pattern))
         return files

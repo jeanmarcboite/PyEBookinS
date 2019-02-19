@@ -24,5 +24,4 @@ class MainWindow(QMainWindow):
             self.setCentralWidget(BookBrowserWidget(dirpath=dirpath,
                                                     parent=self))
         except confuse.NotFoundError as e:
-            print(e)
             self.setCentralWidget(QLabel('Configuration error: {}'.format(e)))

@@ -7,7 +7,6 @@ class AppState():
     def __init__(self):
         self.__dict__ = self._dict
         if not self._dict:
-            print('get config')
             self.config = confuse.Configuration('BookinS', 'config')
 
 if __name__ == '__main__':
