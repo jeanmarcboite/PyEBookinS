@@ -9,6 +9,7 @@ from langdetect import detect
 from config import AppState
 from src.bookinfo.librarything import librarything_from_isbn, librarything_from_id
 from src.bookinfo.openlibrary import openlibrary_from_isbn
+from pprint import pformat
 
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
@@ -33,67 +34,77 @@ def get_str(item):
     assert isinstance(item, str)
     return item
 
-class BookInfo(dict):
-    def __init__(self, filename, **kwargs):
-        super(BookInfo, self).__init__(**kwargs)
-        self.filename = filename
 
-def epub_info(path, calibre_db=None):
+def get_identifiers(book):
+    identifiers = {}
+    dc_identifiers = book.get_metadata('DC', 'identifier')
+    for identifier in dc_identifiers:
+        if (isinstance(identifier, tuple)
+                and isinstance(identifier[0], str)
+                and isinstance(identifier[1], dict)):
+            for key in identifier[1].values():
+                identifiers[key] = identifier[0]
+    return identifiers
+
+def get_language(book):
+    documents = list(map(lambda item: item.get_body_content(),
+                         list(book.get_items_of_type(ITEM_DOCUMENT))))
+    return [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
+
+
+class BookInfo(dict):
     fields = {
-        'DC': ['language', 'title', 'creator', 'identifier', 'source', 'subject',
+        'DC': ['language', 'title', 'creator', 'source', 'subject',
                'contributor', 'publisher', 'rights', 'coverage', 'date', 'description']
     }
 
-    book = epub.read_epub(path)
+    def __init__(self, filename, calibre_db, **kwargs):
+        super(BookInfo, self).__init__(**kwargs)
+        self.filename = filename
 
-    metadata = {}
+        book = epub.read_epub(self.filename)
 
-    for namespace in fields.keys():
-        metadata[namespace] = {}
-        for name in fields[namespace]:
-            metadata[namespace][name] = book.get_metadata(namespace, name)
+        metadata = {}
 
-    info = BookInfo(path)
-    if 'identifier' in metadata['DC'].keys():
-        info['identifier'] = metadata['DC']['identifier']
+        for namespace in BookInfo.fields.keys():
+            metadata[namespace] = {}
+            for name in BookInfo.fields[namespace]:
+                metadata[namespace][name] = book.get_metadata(namespace, name)
 
-    for key in ['author', 'description', 'title', 'source', 'cover_image']:
-        if key in metadata['DC']:
-            info[key] = get_str(metadata['DC'][key])
+        self.identifiers = get_identifiers(book)
 
-    for (to_key, from_key) in {
-        'creation_date': 'date',
-        'author': 'creator',
-        'language_in_epub': 'language'}.items():
-        info[to_key] = get_str(metadata['DC'][from_key])
+        for key in ['author', 'description', 'title', 'source', 'cover_image']:
+            if key in metadata['DC']:
+                setattr(self, key, get_str(metadata['DC'][key]))
+        for (to_key, from_key) in {
+            'creation_date': 'date',
+            'author': 'creator',
+            'language_in_epub': 'language'}.items():
+            setattr(self, to_key, get_str(metadata['DC'][from_key]))
 
-    if info['author'].isupper() and len(info['author'].split()) == 2:
-        info['author'] = ' '.join(list(map(lambda s: s.strip().capitalize(), reversed(info['author'].split(',')))))
+        try:
+            if self.author.isupper() and len(self.author.split()) == 2:
+                self.author = ' '.join(list(map(lambda s: s.strip().capitalize(), reversed(self.author.split(',')))))
+        except AttributeError:
+            pass
 
-    author = ', '.join(list(reversed(info['author'].split())))
+        try:
+            self.ISBN = self.identifiers['ISBN']
+        except KeyError:
+            author = ', '.join(list(reversed(self.author.split())))
+            self.ISBN = isbn_from_words('{} {}'.format(author, self.title))
 
-    info['isbn'] = isbn_from_words('{} {}'.format(info['author'], info['title']))
+        self.language = get_language(book)
 
-    openlibrary = openlibrary_from_isbn(info['isbn'])
-    for key in openlibrary.keys():
-        info['openlibrary'] = openlibrary[key]
-    print(info['openlibrary']['identifiers']['goodreads'])
-    print(info['openlibrary'].keys())
-    info['goodreads'] = goodreads_from_id(info['openlibrary']['identifiers']['goodreads'][0])
-    info['librarything'] = librarything_from_id(info['openlibrary']['identifiers']['librarything'][0])
-    if False:
+        self.openlibrary = openlibrary_from_isbn(self.ISBN)
+        self.goodreads = goodreads_from_id(self.openlibrary['identifiers']['goodreads'][0])
+        self.librarything = librarything_from_id(self.openlibrary['identifiers']['librarything'][0])
+        try:
+            self.cover_image
+        except AttributeError:
+            self.cover_image = isbn_cover(self.ISBN, 'goodreads')
+        #if calibre_db:
+        #info['calibre'] = calibre_db[info['isbn']]
 
-        info['goodreads'] = goodreads_from_isbn(info['isbn'])
-        print(info['goodreads'])
-        info['librarything'] = librarything_from_isbn(info['isbn'])
-
-    if 'cover_image' not in info.keys():
-        info['cover_image'] = isbn_cover(info['isbn'], 'goodreads')
-    documents = list(map(lambda item: item.get_body_content(),
-                         list(book.get_items_of_type(ITEM_DOCUMENT))))
-    info['language'] = [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
-
-    if calibre_db:
-        info['calibre'] = calibre_db[info['isbn']]
-
-    return info
+    def __repr__(self):
+        return pformat(self.__dict__)

@@ -16,4 +16,6 @@ def ebook_openlibrary_response(isbn):
 def openlibrary_from_isbn(isbn):
     openlibrary_response = ebook_openlibrary_response(isbn)
     if openlibrary_response.ok:
-        return json.loads(openlibrary_response.content.decode("utf-8"))
+        openlibrary = json.loads(openlibrary_response.content.decode("utf-8"))
+        for value in openlibrary.values():
+            return value

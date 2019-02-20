@@ -9,9 +9,7 @@ from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget,
     QSplitter
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from src.bookinfo.ebook import epub_info
-from src.bookinfo.goodreads import goodreads_from_isbn
-from src.bookinfo.librarything import librarything_from_isbn
+from src.bookinfo.ebook import BookInfo
 from config import AppState
 from src.bookinfo.calibredb import *
 
@@ -38,6 +36,7 @@ class BookBrowserWidget(QSplitter):
         scroll_area = QScrollArea()
         scroll_area.setWidget(self.info_widget)
         scroll_area.setWidgetResizable(True)
+        scroll_area.resize(800, 600)
         self.addWidget(scroll_area)
 
     class InfoWidget(QWidget):
@@ -60,10 +59,10 @@ class BookBrowserWidget(QSplitter):
 
     def selectionChanged(self, new, old):
         try:
-            print('select ', self.tree_widget.currentItem().file['title'])
+            print('select ', self.tree_widget.currentItem().file.title)
             info = copy(self.tree_widget.currentItem().file)
-            del info['cover_image']
-            self.info_widget.setWidget(QLabel(pformat(info)))
+            del info.cover_image
+            self.info_widget.setWidget(QLabel(str(info)))
         except AttributeError:
             pass
 
@@ -78,19 +77,19 @@ class BookBrowserWidget(QSplitter):
     def files_by(files, key, calibre_db=None):
         by = dict()
         for file in files:
-            info = epub_info(file, calibre_db)
-            if info[key] not in by.keys():
-                by[info[key]] = []
-            by[info[key]].append(info)
+            info = BookInfo(file, calibre_db)
+            attr = getattr(info, key)
+            if attr not in by.keys():
+                by[attr] = []
+            by[attr].append(info)
         return by
 
     class FileListWidget(QListWidget):
         def __init__(self, files, calibre_db, bookIcon, **kwargs):
             super(BookBrowserWidget.FileListWidget, self).__init__(**kwargs)
             for file in files:
-                info = epub_info(file, calibre_db)
-                info['calibre'] = calibre_db[info['isbn']]
-                widget = BookBrowserWidget.FileListWidget.ItemWidget(bookIcon, info['title'])
+                info = BookInfo(file, calibre_db)
+                widget = BookBrowserWidget.FileListWidget.ItemWidget(bookIcon, info.title)
                 widgetItem = QListWidgetItem(self)
                 widgetItem.setSizeHint(widget.sizeHint())
                 self.addItem(widgetItem)
@@ -112,7 +111,7 @@ class BookBrowserWidget(QSplitter):
             def __init__(self, parent, file):
                 super(BookBrowserWidget.FileTreeWidget.Item, self).__init__(parent)
                 self.file = file
-                self.setText(0, file['title'])
+                self.setText(0, file.title)
 
         def __init__(self, files, default_pixmap, **kwargs):
             super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
@@ -130,7 +129,7 @@ class BookBrowserWidget(QSplitter):
                         pixmap = default_pixmap
                     else:
                         pixmap = QPixmap()
-                        pixmap.loadFromData(file['cover_image'])
+                        pixmap.loadFromData(file.cover_image)
 
                      #  af, ar, bg, bn, ca, cs, cy, da, de, el,
 #  en, es, et, fa, fi, fr, gu, he, hi, hr,
@@ -138,5 +137,5 @@ class BookBrowserWidget(QSplitter):
 #  mr, ne, nl, no, pa, pl, pt, ro, ru, sk,
 #  sl, so, sq, sv, sw, ta, te, th, tl, tr,
 #  uk, ur, vi, zh-cn, zh-tw
-                    pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file['language'][0]))
+                    pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file.language[0]))
                     file_item.setIcon(0, QIcon(pixmap))
