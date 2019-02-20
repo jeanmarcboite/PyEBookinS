@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget,
     QSplitter
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from src.bookinfo.ebook import BookInfo
+from src.bookinfo.ebook import book_info
 from config import AppState
 from src.bookinfo.calibredb import *
 
@@ -77,7 +77,7 @@ class BookBrowserWidget(QSplitter):
     def files_by(files, key, calibre_db=None):
         by = dict()
         for file in files:
-            info = BookInfo(file, calibre_db)
+            info = book_info(file, calibre_db)
             attr = getattr(info, key)
             if attr not in by.keys():
                 by[attr] = []

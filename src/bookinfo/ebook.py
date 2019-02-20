@@ -1,15 +1,15 @@
-from bs4 import BeautifulSoup
+from pprint import pformat
 
-from src.bookinfo.goodreads import goodreads_from_isbn, goodreads_from_id
-from src.bookinfo.isbn import isbn_from_words, isbn_cover
+from bs4 import BeautifulSoup
 from ebooklib import epub, ITEM_DOCUMENT
 from joblib import Memory
 from langdetect import detect
 
 from config import AppState
-from src.bookinfo.librarything import librarything_from_isbn, librarything_from_id
+from src.bookinfo.goodreads import goodreads_from_id
+from src.bookinfo.isbn import isbn_from_words, isbn_cover
+from src.bookinfo.librarything import librarything_from_id
 from src.bookinfo.openlibrary import openlibrary_from_isbn
-from pprint import pformat
 
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
@@ -46,10 +46,16 @@ def get_identifiers(book):
                 identifiers[key] = identifier[0]
     return identifiers
 
+
 def get_language(book):
     documents = list(map(lambda item: item.get_body_content(),
                          list(book.get_items_of_type(ITEM_DOCUMENT))))
     return [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
+
+
+@memory.cache()
+def book_info(filename, calibre_db, **kwargs):
+    return BookInfo(filename, calibre_db, **kwargs)
 
 
 class BookInfo(dict):
@@ -97,14 +103,21 @@ class BookInfo(dict):
         self.language = get_language(book)
 
         self.openlibrary = openlibrary_from_isbn(self.ISBN)
-        self.goodreads = goodreads_from_id(self.openlibrary['identifiers']['goodreads'][0])
-        self.librarything = librarything_from_id(self.openlibrary['identifiers']['librarything'][0])
+        if self.openlibrary:
+            try:
+                self.goodreads = goodreads_from_id(self.openlibrary['identifiers']['goodreads'][0])
+            except KeyError:
+                pass
+            try:
+                self.librarything = librarything_from_id(self.openlibrary['identifiers']['librarything'][0])
+            except KeyError:
+                pass
         try:
             self.cover_image
         except AttributeError:
             self.cover_image = isbn_cover(self.ISBN, 'goodreads')
-        #if calibre_db:
-        #info['calibre'] = calibre_db[info['isbn']]
+        # if calibre_db:
+        # info['calibre'] = calibre_db[info['isbn']]
 
     def __repr__(self):
         return pformat(self.__dict__)

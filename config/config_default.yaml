@@ -7,7 +7,7 @@ fcache:
 calibre_db:
   ~/Dropbox/CalibreLibraryi
 database:
-  ebook
+  ebooks
 ebook_extensions: ["epub"]
 
 goodreads:

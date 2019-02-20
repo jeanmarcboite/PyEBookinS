@@ -28,11 +28,9 @@ def ebook_librarything_response(isbn, id_type):
 
 def librarything_from(librarything_response):
     if librarything_response.ok:
-        print(librarything_response.content)
         with open('/home/box/tmp/librarything', 'w') as output_file:
             output_file.write(librarything_response.content.decode("utf-8") )
         root = ElementTree.fromstring(librarything_response.content)
-        print(root.tag, root.attrib)
         ltml = root.find('{http://www.librarything.com/}ltml')
         librarything = {}
         for key in Librarything.attributes.keys():
