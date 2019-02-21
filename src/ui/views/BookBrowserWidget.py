@@ -1,18 +1,19 @@
 import os
 from glob import glob
-from pprint import pformat
-from copy import copy
 
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QPixmap, QIcon
-from PySide2.QtWidgets import QWidget, QHBoxLayout, QListWidget, QStackedWidget, QListWidgetItem, QLabel, QScrollArea, \
+from PySide2.QtWidgets import QScrollArea, \
     QSplitter
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from src.bookinfo.ebook import book_info
 from config import AppState
 from src.bookinfo.calibredb import *
+from src.bookinfo.ebook import book_info
+from src.ui.views.InfoWidget import InfoWidget
 
+
+# noinspection PyPep8Naming
 class BookBrowserWidget(QSplitter):
 
     def __init__(self, dirpath, parent=None):
@@ -25,46 +26,22 @@ class BookBrowserWidget(QSplitter):
         if os.path.isfile(db):
             calibre_db = CalibreDB(database='sqlite:///' + db)
 
-
         default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
 
-        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db), default_pixmap)
+        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
+                                                            default_pixmap)
         self.tree_widget.selectionChanged = self.selectionChanged
         self.addWidget(self.tree_widget)
 
-        self.info_widget = BookBrowserWidget.InfoWidget()
+        self.info_widget = InfoWidget()
         scroll_area = QScrollArea()
         scroll_area.setWidget(self.info_widget)
         scroll_area.setWidgetResizable(True)
         scroll_area.resize(800, 600)
         self.addWidget(scroll_area)
 
-    class InfoWidget(QWidget):
-        def __init__(self, parent=None):
-            super(BookBrowserWidget.InfoWidget, self).__init__(parent)
-            self.setLayout(QHBoxLayout())
-            self.layout().addWidget(QLabel('no selection'))
-
-        def clean(self):
-            while True:
-                child = self.layout().takeAt(0)
-                if child:
-                    child.widget().deleteLater()
-                else:
-                    break
-
-        def setWidget(self, widget):
-            self.clean()
-            self.layout().addWidget(widget)
-
     def selectionChanged(self, new, old):
-        try:
-            print('select ', self.tree_widget.currentItem().file.title)
-            info = copy(self.tree_widget.currentItem().file)
-            del info.cover_image
-            self.info_widget.setWidget(QLabel(str(info)))
-        except AttributeError:
-            pass
+        self.info_widget.set_info(self.tree_widget.currentItem().file)
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
@@ -73,6 +50,7 @@ class BookBrowserWidget(QSplitter):
             pattern = os.path.join(dirpath, '*.' + extension)
             files.extend(glob(pattern))
         return files
+
     @staticmethod
     def files_by(files, key, calibre_db=None):
         by = dict()
@@ -83,28 +61,6 @@ class BookBrowserWidget(QSplitter):
                 by[attr] = []
             by[attr].append(info)
         return by
-
-    class FileListWidget(QListWidget):
-        def __init__(self, files, calibre_db, bookIcon, **kwargs):
-            super(BookBrowserWidget.FileListWidget, self).__init__(**kwargs)
-            for file in files:
-                info = BookInfo(file, calibre_db)
-                widget = BookBrowserWidget.FileListWidget.ItemWidget(bookIcon, info.title)
-                widgetItem = QListWidgetItem(self)
-                widgetItem.setSizeHint(widget.sizeHint())
-                self.addItem(widgetItem)
-                self.setItemWidget(widgetItem, widget)
-
-        class ItemWidget(QWidget):
-            def __init__(self, icon, text, **kwargs):
-                super(BookBrowserWidget.FileListWidget.ItemWidget, self).__init__(**kwargs)
-                layout = QHBoxLayout()
-                iconLabel = QLabel()
-                iconLabel.setPixmap(icon.scaledToHeight(24))
-                label = QLabel(text)
-                layout.addWidget(iconLabel, 0)
-                layout.addWidget(label, 1)
-                self.setLayout(layout)
 
     class FileTreeWidget(QTreeWidget):
         class Item(QTreeWidgetItem):
@@ -131,11 +87,11 @@ class BookBrowserWidget(QSplitter):
                         pixmap = QPixmap()
                         pixmap.loadFromData(file.cover_image)
 
-                     #  af, ar, bg, bn, ca, cs, cy, da, de, el,
-#  en, es, et, fa, fi, fr, gu, he, hi, hr,
-#  hu, id, it, ja, kn, ko, lt, lv, mk, ml,
-#  mr, ne, nl, no, pa, pl, pt, ro, ru, sk,
-#  sl, so, sq, sv, sw, ta, te, th, tl, tr,
-#  uk, ur, vi, zh-cn, zh-tw
+                    #  af, ar, bg, bn, ca, cs, cy, da, de, el,
+                    #  en, es, et, fa, fi, fr, gu, he, hi, hr,
+                    #  hu, id, it, ja, kn, ko, lt, lv, mk, ml,
+                    #  mr, ne, nl, no, pa, pl, pt, ro, ru, sk,
+                    #  sl, so, sq, sv, sw, ta, te, th, tl, tr,
+                    #  uk, ur, vi, zh-cn, zh-tw
                     pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file.language[0]))
                     file_item.setIcon(0, QIcon(pixmap))

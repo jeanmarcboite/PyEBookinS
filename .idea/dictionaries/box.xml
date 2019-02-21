@@ -2,6 +2,9 @@
   <dictionary name="box">
     <words>
       <w>datatype</w>
+      <w>dirpath</w>
+      <w>ebook</w>
+      <w>pixmap</w>
       <w>tablename</w>
     </words>
   </dictionary>
