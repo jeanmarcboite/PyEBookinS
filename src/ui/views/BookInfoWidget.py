@@ -1,3 +1,5 @@
+from copy import copy
+
 from PySide2.QtGui import QFont, QPixmap
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget
 
@@ -6,6 +8,16 @@ from src.ui.views.icons import flag_label
 class OpenLibraryWidget(QWidget):
     def __init__(self, info, parent=None):
         super(OpenLibraryWidget, self).__init__(parent)
+        self.setLayout(QVBoxLayout())
+
+class RawWidget(QWidget):
+    def __init__(self, info, parent=None):
+        super(RawWidget, self).__init__(parent)
+        self.setLayout(QVBoxLayout())
+
+        info = copy(info)
+        del info.cover_image
+        self.layout().addWidget(QLabel(str(info)))
 
 class BookInfoWidget(QWidget):
     def __init__(self, info, parent=None):
@@ -37,6 +49,7 @@ class BookInfoWidget(QWidget):
 
         information_widget = QTabWidget()
         information_widget.addTab(OpenLibraryWidget(self.info), 'OpenLibrary')
+        information_widget.addTab(RawWidget(self.info), 'info')
         self.layout().addWidget(information_widget)
 
 
