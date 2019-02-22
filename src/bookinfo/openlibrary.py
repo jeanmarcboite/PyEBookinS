@@ -58,6 +58,7 @@ def openlibrary_from_info(info):
             try:
                 if doc['title'].replace('.', "") == title and doc["language"][0] == language:
                     doc["identifiers"] = {}
+                    doc["identifiers"]["openlibrary"] = doc["key"]
                     doc["identifiers"]["goodreads"] = doc["id_goodreads"]
                     try:
                         doc["identifiers"]["librarything"] = doc['id_librarything']

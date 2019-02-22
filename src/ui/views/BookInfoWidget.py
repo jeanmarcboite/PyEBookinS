@@ -8,6 +8,8 @@ from PySide2 import QtWebEngineWidgets
 from src.ui.views.icons import flag_label
 import logging
 logger = logging.getLogger('gui')
+from config import AppState
+config = AppState().config
 
 class InfoWidget(QWidget):
     def __init__(self, info, parent=None):
@@ -26,9 +28,9 @@ class OpenLibraryWidget(InfoWidget):
 
     def add_widgets(self):
         if self.info.openlibrary:
-            widget = QTextEdit(pformat(self.info.openlibrary, indent=4))
-            widget.setReadOnly(True)
-            self.layout().addWidget(widget)
+            w = QWebEngineView()
+            w.load(config['openlibrary']['url'].as_str().format(self.info.openlibrary['key']))
+            self.layout().addWidget(w)
 
 
 class GoodreadsWidget(InfoWidget):
@@ -39,6 +41,16 @@ class GoodreadsWidget(InfoWidget):
         if self.info.goodreads:
             w = QWebEngineView()
             w.load(self.info.goodreads['book']['link'])
+            self.layout().addWidget(w)
+
+class LibrarythingWidget(InfoWidget):
+    def __init__(self, info, parent=None):
+        super(LibrarythingWidget, self).__init__(info, parent)
+
+    def add_widgets(self):
+        if self.info.librarything:
+            w = QWebEngineView()
+            w.load(self.info.librarything['url'])
             self.layout().addWidget(w)
 
 
@@ -82,6 +94,7 @@ class BookInfoWidget(QWidget):
 
         information_widget = QTabWidget()
         information_widget.addTab(RawWidget(self.info), 'info')
-        information_widget.addTab(GoodreadsWidget(self.info), 'Goodreads')
         information_widget.addTab(OpenLibraryWidget(self.info), 'OpenLibrary')
+        information_widget.addTab(GoodreadsWidget(self.info), 'Goodreads')
+        information_widget.addTab(LibrarythingWidget(self.info), 'LibraryThing')
         self.layout().addWidget(information_widget)

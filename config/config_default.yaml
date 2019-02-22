@@ -25,6 +25,7 @@ goodreads:
 openlibrary:
   cover_url: 'http://covers.openlibrary.org/b/ISBN/{}-L.jpg'
   data_url: "https://openlibrary.org/api/books?bibkeys=ISBN:{}&format=json&jscmd=data"
+  url: "https://openlibrary.org/{}"
 
 librarything:
   key: '3a88914e5ef7d402e75bdbdcda333f4f'

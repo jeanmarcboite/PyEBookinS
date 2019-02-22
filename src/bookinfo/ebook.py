@@ -114,7 +114,7 @@ class BookInfo(dict):
             try:
                 self.librarything = librarything_from_id(self.openlibrary['identifiers']['librarything'][0])
             except KeyError:
-                pass
+                self.librarything = librarything_from_isbn(self.ISBN)
         else:
             logger.info('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
             self.goodreads = goodreads_from_isbn(self.ISBN)

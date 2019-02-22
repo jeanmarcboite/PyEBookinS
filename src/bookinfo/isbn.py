@@ -88,7 +88,6 @@ def isbn_from_words(words):
         if filecache:
             filecache[words] = isbn
     logger.debug("found isbn {} for '{}'".format(isbn, words))
-    logger.debug(isbn, words)
     return isbn
 
 
