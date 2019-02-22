@@ -1,7 +1,7 @@
 from copy import copy
 from pprint import pformat
 
-from PySide2.QtGui import QFont
+from PySide2.QtGui import QFont, QIcon, QPixmap
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
 from PySide2 import QtWebEngineWidgets
@@ -21,37 +21,44 @@ class InfoWidget(QWidget):
         except AttributeError as e:
             logger.error('{}: {}'.format(self.info.title, e))
 
+class WebInfoWidget(InfoWidget):
+    def __init__(self, info, parent=None):
+        super(WebInfoWidget, self).__init__(info, parent)
 
-class OpenLibraryWidget(InfoWidget):
+    def load(self, url):
+        self.url = url
+        self.webview = QWebEngineView()
+        self.webview.load(self.url)
+        self.layout().addWidget(self.webview)
+
+    def reload(self):
+        self.webview.load(self.url)
+
+
+class OpenLibraryWidget(WebInfoWidget):
     def __init__(self, info, parent=None):
         super(OpenLibraryWidget, self).__init__(info, parent)
 
     def add_widgets(self):
         if self.info.openlibrary:
-            w = QWebEngineView()
-            w.load(config['openlibrary']['url'].as_str().format(self.info.openlibrary['key']))
-            self.layout().addWidget(w)
+            self.load(config['openlibrary']['url'].as_str().format(self.info.openlibrary['key']))
 
 
-class GoodreadsWidget(InfoWidget):
+class GoodreadsWidget(WebInfoWidget):
     def __init__(self, info, parent=None):
         super(GoodreadsWidget, self).__init__(info, parent)
 
     def add_widgets(self):
         if self.info.goodreads:
-            w = QWebEngineView()
-            w.load(self.info.goodreads['book']['link'])
-            self.layout().addWidget(w)
+            self.load(self.info.goodreads['book']['link'])
 
-class LibrarythingWidget(InfoWidget):
+class LibrarythingWidget(WebInfoWidget):
     def __init__(self, info, parent=None):
         super(LibrarythingWidget, self).__init__(info, parent)
 
     def add_widgets(self):
         if self.info.librarything:
-            w = QWebEngineView()
-            w.load(self.info.librarything['url'])
-            self.layout().addWidget(w)
+            self.load(self.info.librarything['url'])
 
 
 class RawWidget(InfoWidget):
@@ -94,7 +101,11 @@ class BookInfoWidget(QWidget):
 
         information_widget = QTabWidget()
         information_widget.addTab(RawWidget(self.info), 'info')
-        information_widget.addTab(OpenLibraryWidget(self.info), 'OpenLibrary')
-        information_widget.addTab(GoodreadsWidget(self.info), 'Goodreads')
-        information_widget.addTab(LibrarythingWidget(self.info), 'LibraryThing')
+        information_widget.addTab(OpenLibraryWidget(self.info),
+                                  QIcon(QPixmap('../resources/icons/OpenLibrary_400x400.jpg')),
+                                  'OpenLibrary')
+        information_widget.addTab(GoodreadsWidget(self.info), QIcon(QPixmap('../resources/icons/iconfinder_goodreads_43148.png')), 'Goodreads')
+        information_widget.addTab(LibrarythingWidget(self.info),
+                                  QIcon(QPixmap('../resources/icons/LibraryThing_icon.jpg')), 'LibraryThing')
+        information_widget.setMovable(True)
         self.layout().addWidget(information_widget)
