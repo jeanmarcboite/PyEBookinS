@@ -1,6 +1,6 @@
-application_name: BookinS
+application_name: &application BookinS
 cache:
-  directory: ~/.cache
+  directory: ~/.cache/*application
   verbose: True
 fcache:
   isbn: True
@@ -28,3 +28,8 @@ librarything:
 
 anchor: &anchor default_name
 alias: *anchor
+
+language_code:
+  fr: fre
+  en: eng
+  it: ita

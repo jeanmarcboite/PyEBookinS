@@ -4,7 +4,10 @@
       <w>datatype</w>
       <w>dirpath</w>
       <w>ebook</w>
+      <w>epub</w>
       <w>goodreads</w>
+      <w>librarything</w>
+      <w>openlibrary</w>
       <w>pixmap</w>
       <w>tablename</w>
     </words>

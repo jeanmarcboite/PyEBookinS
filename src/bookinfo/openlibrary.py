@@ -31,11 +31,11 @@ def openlibrary_from_words(words):
     url = 'https://openlibrary.org/search.json?q={}'.format('+'.join(words.split()))
     response = requests.get(url)
     if response.ok:
-        openlibrary = json.loads(response.content.decode('utf-8'))
-        print(openlibrary)
-        return openlibrary
+        return json.loads(response.content.decode('utf-8'))
     return None
 
+
+@memory.cache()
 def openlibrary_from_info(info):
     openlibrary = openlibrary_from_isbn(info.ISBN)
     if openlibrary:
@@ -50,26 +50,21 @@ def openlibrary_from_info(info):
     if openlibrary:
         return openlibrary
     openlibrary = openlibrary_from_words('{} {}'.format(info.author, info.title))
-    dic = {"identifiers": {}}
-    print(openlibrary.keys())
-    language = info.language[0]
-    if (language == 'fr'):
-        language = 'fre'
-    if (language == 'en'):
-        language = 'eng'
+    language = config['language_code'][info.language[0]].get()
+    title = info.title.replace('.', "")
     if openlibrary["num_found"] > 0:
-        # dic["identifiers"]["goodreads"] = openlibrary["id_goodreads"]
         for doc in openlibrary["docs"]:
-            print(doc)
-            if (doc['title'] == info.title and doc["language"][0] == language):
-                dic = copy(doc)
-                print(dic['id_goodreads'])
-                dic["identifiers"] = {}
-                dic["identifiers"]["goodreads"] = dic["id_goodreads"]
-                try:
-                    dic["identifiers"]["librarything"] = dic['id_librarything']
-                except KeyError:
-                    pass
-                return dic
+            try:
+                if doc['title'].replace('.', "") == title and doc["language"][0] == language:
+                    doc["identifiers"] = {}
+                    doc["identifiers"]["goodreads"] = doc["id_goodreads"]
+                    try:
+                        doc["identifiers"]["librarything"] = doc['id_librarything']
+                    except KeyError:
+                        pass
+                    return doc
+
+            except KeyError:
+                pass
 
 

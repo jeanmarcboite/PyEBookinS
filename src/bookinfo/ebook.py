@@ -52,7 +52,6 @@ def get_language(book):
                          list(book.get_items_of_type(ITEM_DOCUMENT))))
     return [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
 
-
 def book_info(filename, calibre_db, **kwargs):
     return BookInfo(filename, calibre_db, **kwargs)
 
@@ -115,7 +114,6 @@ class BookInfo(dict):
             except KeyError:
                 pass
         else:
-            self.openlibrary = openlibrary_from_words('{} {}'.format(self.author, self.title))
             print('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
             self.goodreads = goodreads_from_isbn(self.ISBN)
             self.librarything = librarything_from_isbn(self.ISBN)
