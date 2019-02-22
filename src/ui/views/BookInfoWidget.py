@@ -1,23 +1,53 @@
 from copy import copy
+from pprint import pformat
 
-from PySide2.QtGui import QFont, QPixmap
-from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget
+from PySide2.QtGui import QFont
+from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
 
 from src.ui.views.icons import flag_label
 
-class OpenLibraryWidget(QWidget):
-    def __init__(self, info, parent=None):
-        super(OpenLibraryWidget, self).__init__(parent)
-        self.setLayout(QVBoxLayout())
 
-class RawWidget(QWidget):
+class InfoWidget(QWidget):
     def __init__(self, info, parent=None):
-        super(RawWidget, self).__init__(parent)
+        super(InfoWidget, self).__init__(parent)
         self.setLayout(QVBoxLayout())
+        self.info = info
+        try:
+            self.add_widgets()
+        except AttributeError as e:
+            print('{}: {}'.format(self.info.title, e))
 
-        info = copy(info)
+
+class OpenLibraryWidget(InfoWidget):
+    def __init__(self, info, parent=None):
+        super(OpenLibraryWidget, self).__init__(info, parent)
+
+    def add_widgets(self):
+        if self.info.openlibrary:
+            widget = QTextEdit(pformat(self.info.openlibrary, indent=4))
+            widget.setReadOnly(True)
+            self.layout().addWidget(widget)
+
+
+class GoodreadsWidget(InfoWidget):
+    def __init__(self, info, parent=None):
+        super(GoodreadsWidget, self).__init__(info, parent)
+
+    def add_widgets(self):
+        if self.info.goodreads:
+            author = QLabel(self.info.author)
+            self.layout().addWidget(author)
+
+
+class RawWidget(InfoWidget):
+    def __init__(self, info, parent=None):
+        super(RawWidget, self).__init__(info, parent)
+
+    def add_widgets(self):
+        info = copy(self.info)
         del info.cover_image
         self.layout().addWidget(QLabel(str(info)))
+
 
 class BookInfoWidget(QWidget):
     def __init__(self, info, parent=None):
@@ -48,8 +78,7 @@ class BookInfoWidget(QWidget):
         self.layout().addLayout(lang_isbn)
 
         information_widget = QTabWidget()
-        information_widget.addTab(OpenLibraryWidget(self.info), 'OpenLibrary')
         information_widget.addTab(RawWidget(self.info), 'info')
+        information_widget.addTab(GoodreadsWidget(self.info), 'Goodreads')
+        information_widget.addTab(OpenLibraryWidget(self.info), 'OpenLibrary')
         self.layout().addWidget(information_widget)
-
-

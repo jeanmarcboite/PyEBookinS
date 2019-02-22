@@ -6,10 +6,10 @@ from joblib import Memory
 from langdetect import detect
 
 from config import AppState
-from src.bookinfo.goodreads import goodreads_from_id
+from src.bookinfo.goodreads import goodreads_from_id, goodreads_from_isbn
 from src.bookinfo.isbn import isbn_from_words, isbn_cover
-from src.bookinfo.librarything import librarything_from_id
-from src.bookinfo.openlibrary import openlibrary_from_isbn
+from src.bookinfo.librarything import librarything_from_id, librarything_from_isbn
+from src.bookinfo.openlibrary import openlibrary_from_isbn, openlibrary_from_words, openlibrary_from_info
 
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
@@ -53,7 +53,6 @@ def get_language(book):
     return [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
 
 
-@memory.cache()
 def book_info(filename, calibre_db, **kwargs):
     return BookInfo(filename, calibre_db, **kwargs)
 
@@ -96,13 +95,16 @@ class BookInfo(dict):
 
         try:
             self.ISBN = self.identifiers['ISBN']
+            print('{}, found {} in epub'.format(self.title, self.ISBN))
         except KeyError:
             author = ', '.join(list(reversed(self.author.split())))
             self.ISBN = isbn_from_words('{} {}'.format(author, self.title))
+            print('{}, no isbn in epub, found {} from google'.format(self.title, self.ISBN))
 
         self.language = get_language(book)
 
-        self.openlibrary = openlibrary_from_isbn(self.ISBN)
+        self.openlibrary = openlibrary_from_info(self)
+
         if self.openlibrary:
             try:
                 self.goodreads = goodreads_from_id(self.openlibrary['identifiers']['goodreads'][0])
@@ -112,6 +114,12 @@ class BookInfo(dict):
                 self.librarything = librarything_from_id(self.openlibrary['identifiers']['librarything'][0])
             except KeyError:
                 pass
+        else:
+            self.openlibrary = openlibrary_from_words('{} {}'.format(self.author, self.title))
+            print('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
+            self.goodreads = goodreads_from_isbn(self.ISBN)
+            self.librarything = librarything_from_isbn(self.ISBN)
+
         try:
             self.cover_image
         except AttributeError:
