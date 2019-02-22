@@ -1,5 +1,6 @@
 import time
 import urllib
+import logging
 
 from isbnlib import isbn_from_words as _isbn_from_words, cover
 from isbnlib.dev import ISBNLibHTTPError, ISBNLibURLError
@@ -11,6 +12,7 @@ from config import AppState
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
                 verbose=config['cache']['verbose'].get())
+logger = logging.getLogger('bookinfo')
 
 isbn_cache = {}
 from fcache.cache import FileCache
@@ -48,7 +50,7 @@ def isbn_from_cache(words):
                     ISBNLibURLError):
                 time.sleep(1)
                 retry += 1
-                print("'{}' not found, retrying".format(words))
+                logger.info("'{}' not found, retrying".format(words))
 
         isbn_cache[words] = isbn
 
@@ -56,7 +58,7 @@ def isbn_from_cache(words):
             os.makedirs(os.path.dirname(cache))
         with open(cache, 'w') as json_file:
             json.dump(isbn_cache, json_file, sort_keys=True, indent=1)
-    print(isbn, words)
+    logger.info("found isbn {} for '{}'".format(isbn, words))
     return isbn
 
 def isbn_from_words(words):
@@ -82,10 +84,11 @@ def isbn_from_words(words):
                     ISBNLibURLError):
                 time.sleep(1)
                 retry += 1
-                print("'{}' not found, retrying".format(words))
+                logger.info("'{}' not found, retrying".format(words))
         if filecache:
             filecache[words] = isbn
-    print(isbn, words)
+    logger.debug("found isbn {} for '{}'".format(isbn, words))
+    logger.debug(isbn, words)
     return isbn
 
 

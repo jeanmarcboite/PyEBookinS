@@ -6,7 +6,8 @@ from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
 from PySide2 import QtWebEngineWidgets
 from src.ui.views.icons import flag_label
-
+import logging
+logger = logging.getLogger('gui')
 
 class InfoWidget(QWidget):
     def __init__(self, info, parent=None):
@@ -16,7 +17,7 @@ class InfoWidget(QWidget):
         try:
             self.add_widgets()
         except AttributeError as e:
-            print('{}: {}'.format(self.info.title, e))
+            logger.error('{}: {}'.format(self.info.title, e))
 
 
 class OpenLibraryWidget(InfoWidget):
@@ -56,7 +57,7 @@ class BookInfoWidget(QWidget):
         super(BookInfoWidget, self).__init__(parent)
 
         self.info = info
-        print('select {}'.format(self.info.title))
+        logging.getLogger('gui').info('select {}'.format(self.info.title))
 
         self.setLayout(QVBoxLayout())
 

@@ -1,6 +1,6 @@
 application_name: &application BookinS
 cache:
-  directory: ~/.cache/*application
+  directory: ~/.cache/BookinS
   verbose: True
 fcache:
   isbn: True
@@ -9,6 +9,12 @@ calibre_db:
 database:
   ebook
 ebook_extensions: ["epub"]
+
+logging:
+  format: '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
+  level:
+    gui: 20
+    bookinfo: debug
 
 goodreads:
   key: 'iKEG2vmZFhfw1GkHkMRk7w'

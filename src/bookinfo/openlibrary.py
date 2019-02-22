@@ -1,4 +1,4 @@
-from copy import copy
+import logging
 
 import requests
 import json
@@ -10,6 +10,7 @@ from src.bookinfo.isbn import isbn_from_words
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
                 verbose=config['cache']['verbose'].get())
+logger = logging.getLogger('bookinfo')
 
 @memory.cache()
 def ebook_openlibrary_response(isbn):
@@ -40,11 +41,11 @@ def openlibrary_from_info(info):
     openlibrary = openlibrary_from_isbn(info.ISBN)
     if openlibrary:
         return openlibrary
-    print('{}, no openlibrary entry for {}'.format(info.title, info.ISBN))
+    logger.info('{}, no openlibrary entry for {}'.format(info.title, info.ISBN))
     author = ', '.join(list(reversed(info.author.split())))
     isbn = isbn_from_words('{} {}'.format(author, info.title))
     if isbn != info.ISBN:
-        print('{}, try again with {}'.format(info.title, info.ISBN))
+        logger.info('{}, try again with {}'.format(info.title, info.ISBN))
         info.ISBN = isbn
         openlibrary = openlibrary_from_isbn(info.ISBN)
     if openlibrary:

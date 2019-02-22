@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from ebooklib import epub, ITEM_DOCUMENT
 from joblib import Memory
 from langdetect import detect
+import logging
 
 from config import AppState
 from src.bookinfo.goodreads import goodreads_from_id, goodreads_from_isbn
@@ -14,6 +15,7 @@ from src.bookinfo.openlibrary import openlibrary_from_isbn, openlibrary_from_wor
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
                 verbose=config['cache']['verbose'].get())
+logger = logging.getLogger('bookinfo')
 
 
 def _detect_language(html):
@@ -94,11 +96,11 @@ class BookInfo(dict):
 
         try:
             self.ISBN = self.identifiers['ISBN']
-            print('{}, found {} in epub'.format(self.title, self.ISBN))
+            logger.info('{}, found {} in epub'.format(self.title, self.ISBN))
         except KeyError:
             author = ', '.join(list(reversed(self.author.split())))
             self.ISBN = isbn_from_words('{} {}'.format(author, self.title))
-            print('{}, no isbn in epub, found {} from google'.format(self.title, self.ISBN))
+            logging.info('{}, no isbn in epub, found {} from google'.format(self.title, self.ISBN))
 
         self.language = get_language(book)
 
@@ -114,7 +116,7 @@ class BookInfo(dict):
             except KeyError:
                 pass
         else:
-            print('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
+            logger.info('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
             self.goodreads = goodreads_from_isbn(self.ISBN)
             self.librarything = librarything_from_isbn(self.ISBN)
 
