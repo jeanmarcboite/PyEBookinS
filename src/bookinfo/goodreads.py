@@ -8,6 +8,7 @@ config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
                 verbose=config['cache']['verbose'].get())
 
+
 # https://www.goodreads.com/book/show/50.xml?key=iKEG2vmZFhfw1GkHkMRk7w
 class Goodreads():
     attributes = {
@@ -35,9 +36,12 @@ class Goodreads():
         ]
     }
 
+
 @memory.cache()
 def ebook_goodreads_request(url):
     return requests.get(url, allow_redirects=False)
+
+
 @memory.cache()
 def ebook_goodreads_response(goodreads_id, id_type='id'):
     url = config['goodreads']['url'][id_type].as_str().format(goodreads_id,
@@ -52,6 +56,8 @@ def ebook_goodreads_response(goodreads_id, id_type='id'):
             g_id = s.split('book/show/')[1].split('.')[0]
             return ebook_goodreads_response(g_id)
     return response
+
+
 def goodreads_from(goodreads_response):
     if goodreads_response.ok:
         with open('/home/box/tmp/goodreads', 'w') as output_file:
@@ -62,12 +68,15 @@ def goodreads_from(goodreads_response):
             goodreads[key] = {}
             for subkey in Goodreads.attributes[key]:
                 field = root.find("{}/{}".format(key, subkey))
-                if (field is not None):
+                if field is not None:
                     goodreads[key][subkey] = field.text
         return goodreads
     return {}
 
+
 def goodreads_from_isbn(isbn):
     return goodreads_from(ebook_goodreads_response(isbn, 'isbn'))
+
+
 def goodreads_from_id(id):
     return goodreads_from(ebook_goodreads_response(id, 'id'))
