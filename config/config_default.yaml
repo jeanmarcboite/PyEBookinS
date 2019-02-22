@@ -7,7 +7,7 @@ fcache:
 calibre_db:
   ~/Dropbox/CalibreLibraryi
 database:
-  ebook
+  ebooks
 ebook_extensions: ["epub"]
 
 logging:
@@ -40,3 +40,7 @@ language_code:
   fr: fre
   en: eng
   it: ita
+
+window:
+  width: 1200
+  height: 800

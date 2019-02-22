@@ -1,5 +1,6 @@
 import logging
 
+import confuse
 import requests
 import json
 from joblib import Memory
@@ -51,7 +52,11 @@ def openlibrary_from_info(info):
     if openlibrary:
         return openlibrary
     openlibrary = openlibrary_from_words('{} {}'.format(info.author, info.title))
-    language = config['language_code'][info.language[0]].get()
+    try:
+        language = config['language_code'][info.language[0]].get()
+    except confuse.ConfigError as ce:
+        logger.error(str(ce))
+        language = info.language[0]
     title = info.title.replace('.', "")
     if openlibrary["num_found"] > 0:
         for doc in openlibrary["docs"]:

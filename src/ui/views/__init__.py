@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)
         self.setWindowTitle(config['application_name'].as_str())
-        self.setFixedSize(900, 680)
+        self.resize(config['window']['width'].as_number(), config['window']['height'].as_number())
         dirpath = config['database'].as_filename()
         if not os.path.exists(dirpath):
             dirpath = BaseDirectory.save_data_path('{}/{}'.format(config['application_name'],
