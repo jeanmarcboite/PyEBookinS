@@ -2,8 +2,9 @@ from copy import copy
 from pprint import pformat
 
 from PySide2.QtGui import QFont
+from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
-
+from PySide2 import QtWebEngineWidgets
 from src.ui.views.icons import flag_label
 
 
@@ -35,8 +36,9 @@ class GoodreadsWidget(InfoWidget):
 
     def add_widgets(self):
         if self.info.goodreads:
-            author = QLabel(self.info.author)
-            self.layout().addWidget(author)
+            w = QWebEngineView()
+            w.load(self.info.goodreads['book']['link'])
+            self.layout().addWidget(w)
 
 
 class RawWidget(InfoWidget):
