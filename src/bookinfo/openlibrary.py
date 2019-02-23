@@ -63,12 +63,15 @@ def openlibrary_from_info(info):
             try:
                 if doc['title'].replace('.', "") == title and doc["language"][0] == language:
                     doc["identifiers"] = {}
-                    doc["identifiers"]["openlibrary"] = doc["key"]
-                    doc["identifiers"]["goodreads"] = doc["id_goodreads"]
-                    try:
-                        doc["identifiers"]["librarything"] = doc['id_librarything']
-                    except KeyError:
-                        pass
+                    for (k, v) in {
+                        "openlibrary": "key",
+                        "goodreads": "id_goodreads",
+                        "librarything": "id_librarything"
+                    }.items():
+                        try:
+                            doc['identifiers'][k] = doc[v]
+                        except KeyError:
+                            pass
                     return doc
 
             except KeyError:
