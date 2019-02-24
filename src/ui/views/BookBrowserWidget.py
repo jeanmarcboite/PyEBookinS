@@ -1,6 +1,6 @@
 import os
-from glob import glob
 from pathlib import Path
+import logging
 
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QPixmap, QIcon
@@ -9,26 +9,31 @@ from PySide2.QtWidgets import QScrollArea, \
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from config import AppState
-from src.bookinfo.calibredb import *
+from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import book_info
 from src.ui.views.InfoWidget import InfoWidget
 
-
 # noinspection PyPep8Naming
 class BookBrowserWidget(QSplitter):
+    logger = logging.getLogger('gui')
 
-    def __init__(self, dirpath, parent=None):
+    def __init__(self, dirpath, calibrepath, parent=None):
         super(BookBrowserWidget, self).__init__(Qt.Horizontal, parent)
 
         files = BookBrowserWidget.find_files(dirpath)
+        BookBrowserWidget.logger.info("Import %d files from %s", len(files), dirpath)
 
-        db = os.path.join(dirpath, 'no-metadata.db')
+        if calibrepath:
+            if os.path.isdir(calibrepath):
+                calibrepath = os.path.join(calibrepath, 'metadata.db')
+        else:
+            calibrepath = os.path.join(dirpath, 'metadata.db')
+
         calibre_db = None
-        if os.path.isfile(db):
-            calibre_db = CalibreDB(database='sqlite:///' + db)
+        if not os.path.isfile(calibrepath):
+            calibre_db = CalibreDB(database='sqlite:///' + calibrepath)
 
         default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
-
         self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
                                                             default_pixmap)
         self.tree_widget.selectionChanged = self.selectionChanged

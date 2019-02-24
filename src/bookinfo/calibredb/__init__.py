@@ -1,10 +1,13 @@
+import logging
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from config import AppState
 from .tables import Author, Book
 from ..isbn import isbn_from_words
-
-db_uri='sqlite:///metadata.db'
+config = AppState().config
+logger = logging.getLogger('bookinfo')
 
 def get_books(db_uri):
     engine = create_engine(db_uri)
@@ -28,6 +31,12 @@ class CalibreDB(dict):
         super(CalibreDB, self).__init__(**kwargs)
         self.key = 'isbn'
         self.database = database
+        print("+Reading calibre database '{}'".format(self.database))
+        logger.setLevel(10)
+        logger.info("Reading calibre database '%s'", self.database)
+        print(logger.getEffectiveLevel(
+
+        ))
         for book in get_books(self.database):
             isbn = ''
             try:

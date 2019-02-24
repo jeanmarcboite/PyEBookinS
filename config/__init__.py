@@ -1,4 +1,6 @@
 import logging
+import sys
+
 import confuse
 from xdg import BaseDirectory
 
@@ -31,9 +33,28 @@ class AppState:
             self.config = confuse.Configuration('BookinS', 'config')
             #logging.basicConfig(format=self.config['logging']['format'].get())
             # logging.getLogger().setLevel(20)
+            # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
+            #                   format='%(asctime)s -- %(name)s -- %(levelname)s -- %(message)s')
             for key in self.config['logging']['level'].keys():
                 try:
-                    logging.getLogger(key).setLevel(log_level(self.config['logging']['level'][key].as_str()))
+                    # create logger
+                    log = logging.getLogger(key)
+                    log.setLevel(log_level(self.config['logging']['level'][key].as_str()))
+
+                    # create formatter and add it to the handlers
+                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+                    # create file handler which logs even debug messages
+                    fh = logging.FileHandler('{}.log'.format(key))
+                    fh.setLevel(logging.DEBUG)
+                    fh.setFormatter(formatter)
+                    log.addHandler(fh)
+
+                    # create console handler with a higher log level
+                    ch = logging.StreamHandler()
+                    ch.setLevel(log_level(self.config['logging']['level'][key].as_str()))
+                    ch.setFormatter(formatter)
+                    log.addHandler(ch)
                 except confuse.ConfigTypeError:
                     logging.getLogger(key).setLevel(self.config['logging']['level'][key].get())
 
