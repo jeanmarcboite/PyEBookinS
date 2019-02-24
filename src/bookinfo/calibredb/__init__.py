@@ -1,4 +1,5 @@
 import logging
+from pprint import pprint, pformat
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -31,12 +32,7 @@ class CalibreDB(dict):
         super(CalibreDB, self).__init__(**kwargs)
         self.key = 'isbn'
         self.database = database
-        print("+Reading calibre database '{}'".format(self.database))
-        logger.setLevel(10)
         logger.info("Reading calibre database '%s'", self.database)
-        print(logger.getEffectiveLevel(
-
-        ))
         for book in get_books(self.database):
             isbn = ''
             try:
@@ -47,4 +43,10 @@ class CalibreDB(dict):
             if len(isbn) < 10:
                 isbn = isbn_from_words('{} {}'.format(book.author_sort, book.title))
 
-            self[isbn] = book
+            if isbn:
+                self[isbn] = book
+            else:
+                self[book.title] = book
+
+    def __repr__(self):
+        return pformat(self.__dict__, indent=4)

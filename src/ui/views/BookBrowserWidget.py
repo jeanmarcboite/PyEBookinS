@@ -7,31 +7,53 @@ from PySide2.QtGui import QPixmap, QIcon
 from PySide2.QtWidgets import QScrollArea, \
     QSplitter
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
+from xdg import BaseDirectory
 
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import book_info
 from src.ui.views.InfoWidget import InfoWidget
 
+config = AppState().config
+
 # noinspection PyPep8Naming
 class BookBrowserWidget(QSplitter):
     logger = logging.getLogger('gui')
 
-    def __init__(self, dirpath, calibrepath, parent=None):
+    def __init__(self, parent=None):
         super(BookBrowserWidget, self).__init__(Qt.Horizontal, parent)
 
-        files = BookBrowserWidget.find_files(dirpath)
-        BookBrowserWidget.logger.info("Import %d files from %s", len(files), dirpath)
+        files = []
+        for b in config['books']:
+            book = b.as_str()
+            if os.path.isfile(book):
+                files.append(book)
+            elif os.path.isdir(book):
+                files.extend(BookBrowserWidget.find_files(book.as_str))
+            else:
+                data_dir = BaseDirectory.save_data_path('{}/{}'.format(config['application_name'],
+                                                                       book))
+                if os.path.isdir(data_dir):
+                    files.extend(BookBrowserWidget.find_files(data_dir))
+                else:
+                    BookBrowserWidget.logger.warning("book '%s' not found")
 
-        if calibrepath:
-            if os.path.isdir(calibrepath):
-                calibrepath = os.path.join(calibrepath, 'metadata.db')
-        else:
-            calibrepath = os.path.join(dirpath, 'metadata.db')
+        BookBrowserWidget.logger.info("Import %d files", len(files))
 
         calibre_db = None
-        if not os.path.isfile(calibrepath):
-            calibre_db = CalibreDB(database='sqlite:///' + calibrepath)
+        try:
+            calibre = config['calibre'].as_str()
+            if not os.path.exists(calibre):
+                calibre = BaseDirectory.save_data_path('{}/{}'.format(config['application_name'],
+                                                                        calibre))
+            if os.path.isdir(calibre):
+                calibre = os.path.join(calibre, 'metadata.db')
+
+            if os.path.isfile(calibre):
+                calibre_db = CalibreDB(database='sqlite:///' + calibre)
+                print(str(calibre_db))
+        except AttributeError:
+            pass
 
         default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
         self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
@@ -60,11 +82,21 @@ class BookBrowserWidget(QSplitter):
     def files_by(files, key, calibre_db=None):
         by = dict()
         for file in files:
-            info = book_info(file, calibre_db)
-            attr = getattr(info, key)
-            if attr not in by.keys():
-                by[attr] = []
-            by[attr].append(info)
+            info = book_info(file)
+
+            if calibre_db:
+                try:
+                    info.calibre = calibre_db[info.ISBN]
+                except (KeyError, AttributeError):
+                    pass
+
+            try:
+                attr = getattr(info, key)
+                if attr not in by.keys():
+                    by[attr] = []
+                by[attr].append(info)
+            except AttributeError:
+                pass
         return by
 
     class FileTreeWidget(QTreeWidget):

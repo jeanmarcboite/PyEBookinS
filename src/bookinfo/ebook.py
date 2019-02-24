@@ -15,7 +15,6 @@ from src.bookinfo.openlibrary import openlibrary_from_isbn, openlibrary_from_wor
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
                 verbose=config['cache']['verbose'].get())
-logger = logging.getLogger('bookinfo')
 
 
 def _detect_language(html):
@@ -56,22 +55,27 @@ def get_language(book):
 
 
 @memory.cache()
-def book_info(filename, calibre_db, **kwargs):
+def book_info(filename, **kwargs):
     id = 2 # change this to invalidate the cache
-    return BookInfo(filename, calibre_db, **kwargs)
+    return BookInfo(filename, **kwargs)
 
 
 class BookInfo(dict):
+    logger = logging.getLogger('bookinfo')
     fields = {
         'DC': ['language', 'title', 'creator', 'source', 'subject',
                'contributor', 'publisher', 'rights', 'coverage', 'date', 'description']
     }
 
-    def __init__(self, filename, calibre_db, **kwargs):
+    def __init__(self, filename, **kwargs):
         super(BookInfo, self).__init__(**kwargs)
         self.filename = filename
-
-        book = epub.read_epub(self.filename)
+        self.logger.debug('Read %s', self.filename)
+        try:
+            book = epub.read_epub(self.filename)
+        except KeyError as ke:
+            BookInfo.logger.error(ke)
+            return
 
         metadata = {}
 
@@ -99,11 +103,11 @@ class BookInfo(dict):
 
         try:
             self.ISBN = self.identifiers['ISBN']
-            logger.info('{}, found {} in epub'.format(self.title, self.ISBN))
+            self.logger.info('{}, found {} in epub'.format(self.title, self.ISBN))
         except KeyError:
             author = ', '.join(list(reversed(self.author.split())))
             self.ISBN = isbn_from_words('{} {}'.format(author, self.title))
-            logging.info('{}, no isbn in epub, found {} from google'.format(self.title, self.ISBN))
+            self.logger.info('{}, no isbn in epub, found {} from google'.format(self.title, self.ISBN))
 
         self.language = get_language(book)
 
@@ -119,7 +123,7 @@ class BookInfo(dict):
             except KeyError:
                 self.librarything = librarything_from_isbn(self.ISBN)
         else:
-            logger.info('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
+            self.logger.info('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
             self.goodreads = goodreads_from_isbn(self.ISBN)
             self.librarything = librarything_from_isbn(self.ISBN)
 

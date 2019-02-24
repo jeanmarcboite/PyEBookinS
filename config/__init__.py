@@ -42,7 +42,7 @@ class AppState:
                     log.setLevel(log_level(self.config['logging']['level'][key].as_str()))
 
                     # create formatter and add it to the handlers
-                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(module)s.%(funcName)s:%(lineno)d - %(levelname)s - %(message)s')
 
                     # create file handler which logs even debug messages
                     fh = logging.FileHandler('{}.log'.format(key))

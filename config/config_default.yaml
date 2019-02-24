@@ -6,8 +6,9 @@ fcache:
   isbn: True
 calibre:
   calibre
-database:
-  ebooks
+books:
+  - ebooks
+  - calibre
 ebook_extensions: ["epub"]
 
 logging:

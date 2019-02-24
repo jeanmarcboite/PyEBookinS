@@ -50,7 +50,7 @@ def isbn_from_cache(words):
                     ISBNLibURLError):
                 time.sleep(1)
                 retry += 1
-                logger.info("'{}' not found, retrying".format(words))
+                logger.debug("'{}' not found, retrying".format(words))
 
         isbn_cache[words] = isbn
 
@@ -58,15 +58,17 @@ def isbn_from_cache(words):
             os.makedirs(os.path.dirname(cache))
         with open(cache, 'w') as json_file:
             json.dump(isbn_cache, json_file, sort_keys=True, indent=1)
-    logger.info("found isbn {} for '{}'".format(isbn, words))
+    logger.debug("found isbn {} for '{}'".format(isbn, words))
     return isbn
+
 
 def isbn_from_words(words):
     global filecache
     if filecache is None:
         try:
             if config['fcache']['isbn']:
-                filecache = FileCache(xdg.BaseDirectory.save_cache_path('isbn'))
+                cachepath = xdg.BaseDirectory.save_cache_path('isbn')
+                filecache = FileCache(xdg.BaseDirectory.save_cache_path('isbn'), flag='cs')
         except KeyError:
             pass
     try:
@@ -74,7 +76,7 @@ def isbn_from_words(words):
     except:
         isbn = None
         retry = 0
-        while isbn is None and retry < 4:
+        while isbn is None and retry < 2:
             try:
                 isbn = _isbn_from_words(words)
             except (ConnectionResetError,
@@ -84,10 +86,10 @@ def isbn_from_words(words):
                     ISBNLibURLError):
                 time.sleep(1)
                 retry += 1
-                logger.info("'{}' not found, retrying".format(words))
+                logger.debug("'{}' not found, retrying".format(words))
         if filecache:
             filecache[words] = isbn
-    logger.debug("found isbn {} for '{}'".format(isbn, words))
+        logger.debug("found isbn {} for '{}'".format(isbn, words))
     return isbn
 
 
