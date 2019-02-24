@@ -15,6 +15,7 @@ memory = Memory(config['cache']['directory'].as_filename(),
 logger = logging.getLogger('bookinfo')
 
 isbn_cache = {}
+cache_file = None
 from fcache.cache import FileCache
 filecache = None
 
@@ -26,21 +27,24 @@ import socket
 import xdg
 
 
-def isbn_from_cache(words):
-    global isbn_cache
-    cache = None
+def isbn_from_words(words):
+    global isbn_cache, cache_file
     if not isbn_cache:
-        if 'isbn' in config['cache'].keys():
-            cache = config['cache']['isbn'].as_filename()
-            if os.path.isfile(cache):
-                with open(cache) as json_file:
-                    isbn_cache = json.load(json_file)
+        try:
+            if (config['cache']['isbn']):
+                cachepath = xdg.BaseDirectory.save_cache_path(config['application_name'].as_str())
+                cache_file = os.path.join(cachepath, 'isbn')
+                if os.path.isfile(cache_file):
+                    with open(cache_file) as json_file:
+                        isbn_cache = json.load(json_file)
+        except KeyError:
+            pass
     try:
         isbn = isbn_cache[words]
     except:
         isbn = None
         retry = 0
-        while isbn is None and retry < 4:
+        while isbn is None and retry < 2:
             try:
                 isbn = _isbn_from_words(words)
             except (ConnectionResetError,
@@ -54,15 +58,14 @@ def isbn_from_cache(words):
 
         isbn_cache[words] = isbn
 
-        if not os.path.exists(os.path.dirname(cache)):
-            os.makedirs(os.path.dirname(cache))
-        with open(cache, 'w') as json_file:
-            json.dump(isbn_cache, json_file, sort_keys=True, indent=1)
+        if cache_file is not None:
+            with open(cache_file, 'w') as json_file:
+                json.dump(isbn_cache, json_file, sort_keys=True, indent=1)
     logger.debug("found isbn {} for '{}'".format(isbn, words))
     return isbn
 
 
-def isbn_from_words(words):
+def isbn_from_fcache(words):
     global filecache
     if filecache is None:
         try:
@@ -87,7 +90,7 @@ def isbn_from_words(words):
                 time.sleep(1)
                 retry += 1
                 logger.debug("'{}' not found, retrying".format(words))
-        if filecache:
+        if filecache is not None:
             filecache[words] = isbn
         logger.debug("found isbn {} for '{}'".format(isbn, words))
     return isbn

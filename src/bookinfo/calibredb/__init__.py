@@ -33,7 +33,12 @@ class CalibreDB(dict):
         self.key = 'isbn'
         self.database = database
         logger.info("Reading calibre database '%s'", self.database)
-        for book in get_books(self.database):
+        # we need to keep the session alive if we want to retriev info later
+        self.engine = create_engine(self.database)
+        Session = sessionmaker(bind=self.engine)
+        self.session = Session()
+
+        for book in self.session.query(Book).all():
             isbn = ''
             try:
                 isbn = book.isbn
