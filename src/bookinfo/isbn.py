@@ -61,7 +61,7 @@ def isbn_from_words(words):
         if cache_file is not None:
             with open(cache_file, 'w') as json_file:
                 json.dump(isbn_cache, json_file, sort_keys=True, indent=1)
-    logger.debug("found isbn {} for '{}'".format(isbn, words))
+            logger.debug("found isbn {} for '{}'".format(isbn, words))
     return isbn
 
 

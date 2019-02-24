@@ -56,7 +56,7 @@ def get_language(book):
 
 @memory.cache()
 def book_info(filename, **kwargs):
-    id = 2 # change this to invalidate the cache
+    id = 4 # change this to invalidate the cache
     return BookInfo(filename, **kwargs)
 
 
@@ -131,6 +131,13 @@ class BookInfo(dict):
             self.cover_image
         except AttributeError:
             self.cover_image = isbn_cover(self.ISBN, 'goodreads')
+
+        # fix author name, goodreads usually better
+        try:
+            self.author = self.goodreads['book/authors/author']['name']
+        except (AttributeError, KeyError):
+            pass
+
         # if calibre_db:
         # info['calibre'] = calibre_db[info['isbn']]
 
