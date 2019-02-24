@@ -10,7 +10,7 @@ memory = Memory(config['cache']['directory'].as_filename(),
 
 
 # https://www.goodreads.com/book/show/50.xml?key=iKEG2vmZFhfw1GkHkMRk7w
-class Goodreads():
+class Goodreads(dict):
     attributes = {
         'book': [
             'id', 'title',
@@ -35,6 +35,16 @@ class Goodreads():
             'average_rating','ratings_count',
         ]
     }
+
+    def __init__(self, root):
+        super(Goodreads, self).__init__()
+        for key in Goodreads.attributes.keys():
+            self[key] = {}
+            for subkey in Goodreads.attributes[key]:
+                field = root.find("{}/{}".format(key, subkey))
+                if field is not None:
+                    self[key][subkey] = field.text
+        self.url = self['book']['link']
 
 
 @memory.cache()
@@ -63,14 +73,7 @@ def goodreads_from(goodreads_response):
         with open('/home/box/tmp/goodreads', 'w') as output_file:
             output_file.write(goodreads_response.content.decode("utf-8") )
         root = ElementTree.fromstring(goodreads_response.content.decode("utf-8"))
-        goodreads = {}
-        for key in Goodreads.attributes.keys():
-            goodreads[key] = {}
-            for subkey in Goodreads.attributes[key]:
-                field = root.find("{}/{}".format(key, subkey))
-                if field is not None:
-                    goodreads[key][subkey] = field.text
-        return goodreads
+        return Goodreads(root)
     return {}
 
 

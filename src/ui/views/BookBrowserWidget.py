@@ -1,5 +1,6 @@
 import os
 from glob import glob
+from pathlib import Path
 
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QPixmap, QIcon
@@ -47,8 +48,7 @@ class BookBrowserWidget(QSplitter):
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
         files = []
         for extension in extensions:
-            pattern = os.path.join(dirpath, '*.' + extension)
-            files.extend(glob(pattern))
+            files.extend(Path(dirpath).glob('**/*.' + extension))
         return files
 
     @staticmethod

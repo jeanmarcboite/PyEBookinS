@@ -54,8 +54,10 @@ def get_language(book):
                          list(book.get_items_of_type(ITEM_DOCUMENT))))
     return [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
 
+
 @memory.cache()
 def book_info(filename, calibre_db, **kwargs):
+    id = 2 # change this to invalidate the cache
     return BookInfo(filename, calibre_db, **kwargs)
 
 

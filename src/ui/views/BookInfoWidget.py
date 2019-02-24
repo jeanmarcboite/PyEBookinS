@@ -19,46 +19,27 @@ class InfoWidget(QWidget):
         try:
             self.add_widgets()
         except AttributeError as e:
-            logger.error('{}: {}'.format(self.info.title, e))
+            logger.warning('InfoWidget {}: {}'.format(self.info.title, e))
 
-class WebInfoWidget(InfoWidget):
-    def __init__(self, info, parent=None):
-        super(WebInfoWidget, self).__init__(info, parent)
-
-    def load(self, url):
-        self.url = url
+class WebInfoWidget(QWidget):
+    def __init__(self, site: str, info, parent=None):
+        super(WebInfoWidget, self).__init__(parent)
+        self.setLayout(QVBoxLayout())
+        self.site = site
+        self.info = info
         self.webview = QWebEngineView()
-        self.webview.load(self.url)
         self.layout().addWidget(self.webview)
+        try:
+            self.url = self.info.__getattribute__(self.site).url
+            self.webview.load(self.url)
+        except AttributeError as e:
+            logger.warning('WebInfoWidget {}: {}'.format(self.info.title, e))
 
     def reload(self):
-        self.webview.load(self.url)
-
-
-class OpenLibraryWidget(WebInfoWidget):
-    def __init__(self, info, parent=None):
-        super(OpenLibraryWidget, self).__init__(info, parent)
-
-    def add_widgets(self):
-        if self.info.openlibrary:
-            self.load(config['openlibrary']['url'].as_str().format(self.info.openlibrary['key']))
-
-
-class GoodreadsWidget(WebInfoWidget):
-    def __init__(self, info, parent=None):
-        super(GoodreadsWidget, self).__init__(info, parent)
-
-    def add_widgets(self):
-        if self.info.goodreads:
-            self.load(self.info.goodreads['book']['link'])
-
-class LibrarythingWidget(WebInfoWidget):
-    def __init__(self, info, parent=None):
-        super(LibrarythingWidget, self).__init__(info, parent)
-
-    def add_widgets(self):
-        if self.info.librarything:
-            self.load(self.info.librarything['url'])
+        try:
+            self.webview.load(self.url)
+        except AttributeError:
+            pass
 
 
 class RawWidget(InfoWidget):
@@ -101,11 +82,10 @@ class BookInfoWidget(QWidget):
 
         information_widget = QTabWidget()
         information_widget.addTab(RawWidget(self.info), 'info')
-        information_widget.addTab(OpenLibraryWidget(self.info),
-                                  QIcon(QPixmap('../resources/icons/OpenLibrary_400x400.jpg')),
-                                  'OpenLibrary')
-        information_widget.addTab(GoodreadsWidget(self.info), QIcon(QPixmap('../resources/icons/iconfinder_goodreads_43148.png')), 'Goodreads')
-        information_widget.addTab(LibrarythingWidget(self.info),
-                                  QIcon(QPixmap('../resources/icons/LibraryThing_icon.jpg')), 'LibraryThing')
+
+        for site in ['openlibrary', 'goodreads', 'librarything']:
+            information_widget.addTab(WebInfoWidget(site, self.info),
+                                      QIcon(QPixmap('../resources/icons/{}.png'.format(site))),
+                                    site.capitalize())
         information_widget.setMovable(True)
         self.layout().addWidget(information_widget)
