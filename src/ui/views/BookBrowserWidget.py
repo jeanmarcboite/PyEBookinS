@@ -51,7 +51,6 @@ class BookBrowserWidget(QSplitter):
 
             if os.path.isfile(calibre):
                 calibre_db = CalibreDB(database='sqlite:///' + calibre)
-                print(str(calibre_db))
         except AttributeError:
             pass
 
@@ -100,6 +99,15 @@ class BookBrowserWidget(QSplitter):
         return by
 
     class FileTreeWidget(QTreeWidget):
+        class AuthorItem(QTreeWidgetItem):
+            def __init__(self, parent, name):
+                super(BookBrowserWidget.FileTreeWidget.AuthorItem, self).__init__(parent)
+                self.setText(0, name)
+                self.sort_text = ' '.join([name.split(" ")[-1],  name])
+
+            def __lt__(self, other):
+                return self.sort_text < other.sort_text
+
         class Item(QTreeWidgetItem):
             def __init__(self, parent, file):
                 super(BookBrowserWidget.FileTreeWidget.Item, self).__init__(parent)
@@ -114,7 +122,7 @@ class BookBrowserWidget(QSplitter):
             root = QTreeWidgetItem(self, ["Authors"])
             root.setExpanded(True)
             for name in files.keys():
-                name_item = QTreeWidgetItem(root, [name])
+                name_item = BookBrowserWidget.FileTreeWidget.AuthorItem(root, name)
                 for file in files[name]:
                     file_item = BookBrowserWidget.FileTreeWidget.Item(name_item, file)
                     pixmap = QPixmap()
@@ -132,3 +140,4 @@ class BookBrowserWidget(QSplitter):
                     #  uk, ur, vi, zh-cn, zh-tw
                     pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file.language[0]))
                     file_item.setIcon(0, QIcon(pixmap))
+            self.sortByColumn(0, Qt.AscendingOrder)

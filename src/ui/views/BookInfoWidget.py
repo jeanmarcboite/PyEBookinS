@@ -84,8 +84,13 @@ class BookInfoWidget(QWidget):
         information_widget.addTab(RawWidget(self.info), 'info')
 
         for site in ['openlibrary', 'goodreads', 'librarything']:
-            information_widget.addTab(WebInfoWidget(site, self.info),
-                                      QIcon(QPixmap('../resources/icons/{}.png'.format(site))),
-                                    site.capitalize())
+            try:
+                self.info.__getattribute__(site).url
+                information_widget.addTab(WebInfoWidget(site, self.info),
+                                          QIcon(QPixmap('../resources/icons/{}.png'.format(site))),
+                                        site.capitalize())
+            except AttributeError:
+                # no tab
+                pass
         information_widget.setMovable(True)
         self.layout().addWidget(information_widget)
