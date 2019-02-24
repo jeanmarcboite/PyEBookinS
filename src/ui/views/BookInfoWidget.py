@@ -11,6 +11,21 @@ logger = logging.getLogger('gui')
 from config import AppState
 config = AppState().config
 
+class BookWidget(QWidget):
+    def __init__(self, info, parent=None):
+        super(BookWidget, self).__init__(parent)
+        self.setLayout(QVBoxLayout())
+        self.info = info
+
+        cover_layout = QVBoxLayout()
+        pixmap = QPixmap()
+        pixmap.loadFromData(self.info.cover_image)
+        label = QLabel()
+        label.setPixmap(pixmap)
+        cover_layout.addWidget(label)
+        cover_layout.addWidget(QLabel(self.info.title))
+        self.layout().addLayout(cover_layout)
+
 class InfoWidget(QWidget):
     def __init__(self, info, parent=None):
         super(InfoWidget, self).__init__(parent)
@@ -81,6 +96,7 @@ class BookInfoWidget(QWidget):
         self.layout().addLayout(lang_isbn)
 
         information_widget = QTabWidget()
+        information_widget.addTab(BookWidget(self.info), 'book')
         information_widget.addTab(RawWidget(self.info), 'info')
 
         for site in ['openlibrary', 'goodreads', 'librarything']:
