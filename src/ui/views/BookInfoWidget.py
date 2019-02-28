@@ -19,7 +19,6 @@ class BookWidget(QWidget):
         self.info = info
         cover_layout = QVBoxLayout()
         try:
-            print(self.info.title, 'cover', self.info.cover_image)
             label = image_label(self.info.cover_image, 400)
         except AttributeError:
             label = image_url_label(self.info.image_url, 200)

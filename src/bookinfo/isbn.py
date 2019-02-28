@@ -123,7 +123,6 @@ def isbn_cover(isbn, provider='OpenLibrary'):
         except ConnectionResetError:
             pass
         except HTTPError as e:
-            print(url)
             logger.info('{}: {}'.format(url, e.msg))
     if provider != 'google':
         return isbn_cover(isbn, 'google')
