@@ -1,16 +1,16 @@
+import logging
 from pprint import pformat
 
 from bs4 import BeautifulSoup
 from ebooklib import epub, ITEM_DOCUMENT
 from joblib import Memory
 from langdetect import detect
-import logging
 
 from config import AppState
 from src.bookinfo.goodreads import goodreads_from_id, goodreads_from_isbn
 from src.bookinfo.isbn import isbn_from_words, isbn_cover
 from src.bookinfo.librarything import librarything_from_id, librarything_from_isbn
-from src.bookinfo.openlibrary import openlibrary_from_isbn, openlibrary_from_words, openlibrary_from_info
+from src.bookinfo.openlibrary import openlibrary_from_info
 
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
@@ -56,82 +56,94 @@ def get_language(book):
 
 @memory.cache()
 def book_info(filename, **kwargs):
-    id = 4 # change this to invalidate the cache
-    return BookInfo(filename, **kwargs)
-
-
-class BookInfo(dict):
+    info = {}
     logger = logging.getLogger('bookinfo')
     fields = {
         'DC': ['language', 'title', 'creator', 'source', 'subject',
                'contributor', 'publisher', 'rights', 'coverage', 'date', 'description']
     }
 
+    try:
+        book = epub.read_epub(filename)
+    except KeyError as ke:
+        logger.error(ke)
+        return info
+
+    metadata = {}
+
+    for namespace in fields.keys():
+        metadata[namespace] = {}
+        for name in fields[namespace]:
+            metadata[namespace][name] = book.get_metadata(namespace, name)
+
+    info['identifiers'] = get_identifiers(book)
+
+    for name in ['author', 'description', 'title', 'source', 'cover_image']:
+        if name in metadata['DC']:
+            info[name] = get_str(metadata['DC'][name])
+
+    for (to_name, from_name) in {
+        'creation_date': 'date',
+        'author': 'creator',
+        'language_in_epub': 'language'}.items():
+        if from_name in metadata['DC']:
+            info[to_name] = get_str(metadata['DC'][from_name])
+
+    # LANGUAGE
+    documents = list(map(lambda item: item.get_body_content(),
+                         list(book.get_items_of_type(ITEM_DOCUMENT))))
+    info['language'] = [lang for lang in set(map(_detect_language, documents)) if len(lang) > 0]
+
+    # AUTHOR
+    try:
+        if info['author'].isupper() and len(info['author'].split()) == 2:
+            info['author'] = ' '.join(list(map(lambda s: s.strip().capitalize(),
+                                               reversed(info['author'].split(',')))))
+    except AttributeError:
+        pass
+
+    # ISBN
+    try:
+        info['ISBN'] = info['identifiers']['ISBN']
+    except KeyError:
+        author = ', '.join(list(reversed(info['author'].split())))
+        info['ISBN'] = isbn_from_words('{} {}'.format(author, info['title']))
+        logger.info('{}, no isbn in epub, found {} from google'.format(info['title'], info['ISBN']))
+
+    # OPENLIBRARY
+    info['openlibrary'] = openlibrary_from_info(info['author'], info['title'],
+                                                info['language'], info['ISBN'])
+    if not info['openlibrary']:
+        del info['openlibrary']
+    else:
+        try:
+            info['ISBN'] = info['openlibrary']['ISBN']
+        except KeyError:
+            pass
+
+    # GOODREADS, LIBRARYTHING
+    for k, f in {'goodreads': (goodreads_from_id, goodreads_from_isbn),
+                 'librarything': (librarything_from_id, librarything_from_isbn)}.items():
+        try:
+            info[k] = f[0](info['openlibrary']['identifiers'][k][0])
+        except (AttributeError, KeyError):
+            info[k] = f[1](info['ISBN'])
+
+    return info
+
+
+class BookInfo():
+    logger = logging.getLogger('bookinfo')
+
     def __init__(self, filename, **kwargs):
         super(BookInfo, self).__init__(**kwargs)
         self.filename = filename
         self.logger.debug('Read %s', self.filename)
-        try:
-            book = epub.read_epub(self.filename)
-        except KeyError as ke:
-            BookInfo.logger.error(ke)
-            return
 
-        metadata = {}
+        for k, v in book_info(filename).items():
+            self.__setattr__(k, v)
 
-        for namespace in BookInfo.fields.keys():
-            metadata[namespace] = {}
-            for name in BookInfo.fields[namespace]:
-                metadata[namespace][name] = book.get_metadata(namespace, name)
-
-        self.identifiers = get_identifiers(book)
-
-        for key in ['author', 'description', 'title', 'source', 'cover_image']:
-            if key in metadata['DC']:
-                setattr(self, key, get_str(metadata['DC'][key]))
-        for (to_key, from_key) in {
-            'creation_date': 'date',
-            'author': 'creator',
-            'language_in_epub': 'language'}.items():
-            setattr(self, to_key, get_str(metadata['DC'][from_key]))
-
-        try:
-            if self.author.isupper() and len(self.author.split()) == 2:
-                self.author = ' '.join(list(map(lambda s: s.strip().capitalize(), reversed(self.author.split(',')))))
-        except AttributeError:
-            pass
-
-        try:
-            self.ISBN = self.identifiers['ISBN']
-            self.logger.info('{}, found {} in epub'.format(self.title, self.ISBN))
-        except KeyError:
-            author = ', '.join(list(reversed(self.author.split())))
-            self.ISBN = isbn_from_words('{} {}'.format(author, self.title))
-            self.logger.info('{}, no isbn in epub, found {} from google'.format(self.title, self.ISBN))
-
-        self.language = get_language(book)
-
-        self.openlibrary = openlibrary_from_info(self)
-
-        if self.openlibrary:
-            try:
-                self.goodreads = goodreads_from_id(self.openlibrary['identifiers']['goodreads'][0])
-            except KeyError:
-                pass
-            try:
-                self.librarything = librarything_from_id(self.openlibrary['identifiers']['librarything'][0])
-            except KeyError:
-                self.librarything = librarything_from_isbn(self.ISBN)
-        else:
-            self.logger.info('{}, no openlibrary entry for {} try to get goodreads and librarything from isbn'.format(self.title, self.ISBN))
-            self.goodreads = goodreads_from_isbn(self.ISBN)
-            self.librarything = librarything_from_isbn(self.ISBN)
-
-        try:
-            self.cover_image
-        except AttributeError:
-            self.cover_image = isbn_cover(self.ISBN, 'goodreads')
-
+        self.get_cover()
         # fix author name, goodreads usually better
         try:
             self.author = self.goodreads['book/authors/author']['name']
@@ -141,5 +153,30 @@ class BookInfo(dict):
         # if calibre_db:
         # info['calibre'] = calibre_db[info['isbn']]
 
+    def get_cover(self):
+        try:
+            self.image_url = self.goodreads['book']['image_url']
+            return
+        except (AttributeError, KeyError):
+            pass
+        try:
+            self.image_url = config['openlibrary']['cover_url'].as_str().format(self.openlibrary['cover_edition_key'])
+            return
+        except (TypeError, AttributeError, KeyError):
+            pass
+        try:
+            self.cover_image
+            return
+        except AttributeError:
+            try:
+                self.cover_image = isbn_cover(self.ISBN, 'goodreads')
+            except AttributeError:
+                pass
+
     def __repr__(self):
-        return pformat(self.__dict__)
+        d = self.__dict__
+        try:
+            del d['cover_image']
+        except:
+            pass
+        return pformat(d)

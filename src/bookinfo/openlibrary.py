@@ -16,12 +16,13 @@ logger = logging.getLogger('bookinfo')
 
 
 class Openlibrary(dict):
-    def __init__(self, doc):
+    def __init__(self, ISBN, doc):
         super(Openlibrary, self).__init__()
         if doc and isinstance(doc, dict):
             for k, v in doc.items():
                 self[k] = copy(v)
             self.url = config['openlibrary']['url'].as_str().format(self['key'])
+        self.ISBN = ISBN
 
 @memory.cache()
 def ebook_openlibrary_response(isbn):
@@ -47,31 +48,37 @@ def openlibrary_from_words(words):
     return None
 
 
-def openlibrary_from_info(info):
-    logger.info('{},  {}'.format(info.title, info.ISBN))
-    openlibrary = openlibrary_from_isbn(info.ISBN)
+@memory.cache()
+def openlibrary_from_info(author, title, language, ISBN):
+    logging.getLogger('openlibrary')
+    logger.info('{},  {}'.format(title, ISBN))
+
+    openlibrary = openlibrary_from_isbn(ISBN)
     if openlibrary:
-        return Openlibrary(openlibrary)
-    logger.info('{}, no openlibrary entry for {}'.format(info.title, info.ISBN))
-    author = ', '.join(list(reversed(info.author.split())))
-    isbn = isbn_from_words('{} {}'.format(author, info.title))
-    if isbn != info.ISBN:
-        logger.info('{}, try again with {}'.format(info.title, info.ISBN))
-        info.ISBN = isbn
-        openlibrary = openlibrary_from_isbn(info.ISBN)
+        return Openlibrary(ISBN, openlibrary)
+
+    logger.info('{}, no openlibrary entry for {}'.format(title, ISBN))
+    author = ', '.join(list(reversed(author.split())))
+    isbn = isbn_from_words('{} {}'.format(author, title))
+    if isbn != ISBN:
+        logger.info('{}, try again with {}'.format(title, ISBN))
+        ISBN = isbn
+        openlibrary = openlibrary_from_isbn(ISBN)
     if openlibrary:
-        return Openlibrary(openlibrary)
-    openlibrary = openlibrary_from_words('{} {}'.format(info.author, info.title))
+        return Openlibrary(ISBN, openlibrary)
+    openlibrary = openlibrary_from_words('{} {}'.format(author, title))
+    if openlibrary is None:
+        return None
     try:
-        language = config['language_code'][info.language[0]].get()
+        language_code = config['language_code'][language[0]].get()
     except confuse.ConfigError as ce:
         logger.error(str(ce))
-        language = info.language[0]
-    title = info.title.replace('.', "")
+        language_code = language[0]
+    title = title.replace('.', "")
     if openlibrary["num_found"] > 0:
         for doc in openlibrary["docs"]:
             try:
-                if doc['title'].replace('.', "") == title and doc["language"][0] == language:
+                if doc['title'].replace('.', "") == title and doc["language"][0] == language_code:
                     doc["identifiers"] = {}
                     for (k, v) in {
                         "openlibrary": "key",
@@ -82,7 +89,7 @@ def openlibrary_from_info(info):
                             doc['identifiers'][k] = doc[v]
                         except KeyError:
                             pass
-                    return Openlibrary(doc)
+                    return Openlibrary(ISBN, doc)
             except KeyError:
                 pass
     return None

@@ -1,11 +1,12 @@
 from copy import copy
 from pprint import pformat
 
+from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont, QIcon, QPixmap
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
 from PySide2 import QtWebEngineWidgets
-from src.ui.views.icons import flag_label
+from src.ui.views.icons import flag_label, image_url_label, image_label
 import logging
 logger = logging.getLogger('gui')
 from config import AppState
@@ -16,15 +17,19 @@ class BookWidget(QWidget):
         super(BookWidget, self).__init__(parent)
         self.setLayout(QVBoxLayout())
         self.info = info
-
+        print('BookInfoWidget', info.title)
         cover_layout = QVBoxLayout()
-        pixmap = QPixmap()
-        pixmap.loadFromData(self.info.cover_image)
-        label = QLabel()
-        label.setPixmap(pixmap)
-        cover_layout.addWidget(label)
+        try:
+            print(self.info.image_url)
+            label = image_url_label(self.info.image_url, 200)
+        except AttributeError:
+            label = image_label(self.info.cover_image, 200)
+        #label = image_label(None, 200)
+        #cover_layout.addWidget(label)
         cover_layout.addWidget(QLabel(self.info.title))
-        self.layout().addLayout(cover_layout)
+        self.layout().addWidget(label)
+        self.layout().setAlignment(Qt.AlignTop)
+
 
 class InfoWidget(QWidget):
     def __init__(self, info, parent=None):
@@ -61,11 +66,11 @@ class RawWidget(InfoWidget):
     def __init__(self, info, parent=None):
         super(RawWidget, self).__init__(info, parent)
 
-    def add_widgets(self):
         info = copy(self.info)
-        del info.cover_image
         self.layout().addWidget(QLabel(str(info)))
 
+    def add_widgets(self):
+        pass
 
 class BookInfoWidget(QWidget):
     def __init__(self, info, parent=None):

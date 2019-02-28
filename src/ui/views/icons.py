@@ -1,3 +1,5 @@
+import urllib
+
 from PySide2.QtGui import QPixmap
 from PySide2.QtWidgets import QLabel
 
@@ -12,10 +14,25 @@ def flag_label(language, height, **kwargs):
 
 def image_label(image, height, **kwargs):
         label = QLabel()
-        pixmap = QPixmap("images/No_Cover.jpg")
+        pixmap = QPixmap("../resources/icons/No_Cover.jpg")
         if image is not None:
             pixmap.loadFromData(image)
         label.setPixmap(pixmap.scaledToHeight(height))
 
         return label
 
+
+def image_url_label(url, height):
+        image = None
+        label = QLabel()
+        pixmap = QPixmap("images/No_Cover.jpg")
+        try:
+                image = urllib.request.urlopen(url).read()
+        except:
+                pass
+
+        if image is not None:
+            pixmap.loadFromData(image)
+        label.setPixmap(pixmap.scaledToHeight(height))
+
+        return label

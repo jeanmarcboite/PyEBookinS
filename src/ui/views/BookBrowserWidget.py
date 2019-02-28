@@ -11,7 +11,7 @@ from xdg import BaseDirectory
 
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
-from src.bookinfo.ebook import book_info
+from src.bookinfo.ebook import book_info, BookInfo
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
@@ -81,7 +81,7 @@ class BookBrowserWidget(QSplitter):
     def files_by(files, key, calibre_db=None):
         by = dict()
         for file in files:
-            info = book_info(file)
+            info = BookInfo(file)
 
             if calibre_db:
                 try:
@@ -126,11 +126,11 @@ class BookBrowserWidget(QSplitter):
                 for file in files[name]:
                     file_item = BookBrowserWidget.FileTreeWidget.Item(name_item, file)
                     pixmap = QPixmap()
-                    if 'cover_image' not in file.keys():
-                        pixmap = default_pixmap
-                    else:
+                    try:
                         pixmap = QPixmap()
                         pixmap.loadFromData(file.cover_image)
+                    except AttributeError:
+                        pixmap = default_pixmap
 
                     #  af, ar, bg, bn, ca, cs, cy, da, de, el,
                     #  en, es, et, fa, fi, fr, gu, he, hi, hr,
