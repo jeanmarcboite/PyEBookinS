@@ -1,7 +1,9 @@
+import time
 import urllib
 import xml.etree.ElementTree as ElementTree
 
 import requests
+import socket
 from bs4 import BeautifulSoup
 from joblib import Memory
 
@@ -60,11 +62,24 @@ def librarything_from_isbn(isbn):
 def librarything_from_id(id):
     return librarything_from(ebook_librarything_response(id, 'id'))
 
+
+def librarything_html(url):
+    retry = 0
+    while retry < 2:
+        try:
+            return requests.get(url)
+        except (ConnectionResetError, socket.timeout):
+            time.sleep(1)
+            retry += 1
+
 @memory.cache()
 def librarything_cover(url):
-    response = requests.get(url)
+    response = librarything_html(url)
     if response.ok:
         soup = BeautifulSoup(response.content, 'html.parser')
+        for img in soup.find_all('img'):
+            if img.get('id') == 'mainCover':
+                return urllib.request.urlopen(img.get('src')).read()
         for meta in soup.find_all('meta'):
             if meta.get('property') == 'og:image':
                 return urllib.request.urlopen(meta.get('content')).read()

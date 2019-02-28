@@ -16,8 +16,7 @@ def image_label(image, height, **kwargs):
         label = QLabel()
         pixmap = QPixmap("../resources/icons/No_Cover.jpg")
         if image is not None:
-                print(len(image))
-                print('load', pixmap.loadFromData(image))
+                pixmap.loadFromData(image)
         label.setPixmap(pixmap.scaledToHeight(height))
 
         return label
