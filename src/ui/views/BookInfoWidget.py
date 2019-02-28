@@ -19,13 +19,14 @@ class BookWidget(QWidget):
         self.info = info
         cover_layout = QVBoxLayout()
         try:
-            label = image_url_label(self.info.image_url, 200)
+            print(self.info.title, 'cover', self.info.cover_image)
+            label = image_label(self.info.cover_image, 400)
         except AttributeError:
-            label = image_label(self.info.cover_image, 200)
+            label = image_url_label(self.info.image_url, 200)
         #label = image_label(None, 200)
-        #cover_layout.addWidget(label)
+        cover_layout.addWidget(label)
         cover_layout.addWidget(QLabel(self.info.title))
-        self.layout().addWidget(label)
+        self.layout().addLayout(cover_layout)
         self.layout().setAlignment(Qt.AlignTop)
 
 
@@ -64,8 +65,9 @@ class RawWidget(InfoWidget):
     def __init__(self, info, parent=None):
         super(RawWidget, self).__init__(info, parent)
 
-        info = copy(self.info)
-        self.layout().addWidget(QLabel(str(info)))
+        label = QLabel(str(self.info))
+        label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.layout().addWidget(label)
 
     def add_widgets(self):
         pass

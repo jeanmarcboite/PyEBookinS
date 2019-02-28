@@ -9,7 +9,7 @@ calibre:
   calibre
 books:
   - ebooks
-  - calibre
+  - ncalibre
 ebook_extensions: ["epub"]
 
 logging:

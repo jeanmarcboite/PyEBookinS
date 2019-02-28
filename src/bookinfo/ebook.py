@@ -1,6 +1,7 @@
 import logging
 from pprint import pformat
 
+import requests
 from bs4 import BeautifulSoup
 from ebooklib import epub, ITEM_DOCUMENT
 from joblib import Memory
@@ -9,7 +10,8 @@ from langdetect import detect
 from config import AppState
 from src.bookinfo.goodreads import goodreads_from_id, goodreads_from_isbn
 from src.bookinfo.isbn import isbn_from_words, isbn_cover
-from src.bookinfo.librarything import librarything_from_id, librarything_from_isbn
+from src.bookinfo.librarything import librarything_from_id, \
+    librarything_from_isbn, librarything_cover
 from src.bookinfo.openlibrary import openlibrary_from_info
 
 config = AppState().config
@@ -154,14 +156,29 @@ class BookInfo():
         # info['calibre'] = calibre_db[info['isbn']]
 
     def get_cover(self):
+
         try:
             self.cover_image
             return
         except AttributeError:
-            try:
-                self.cover_image = isbn_cover(self.ISBN, 'librarything')
-            except AttributeError:
-                pass
+            pass
+
+        try:
+            cover_image = librarything_cover(self.librarything['url'])
+            if len(cover_image) > 1000:
+                self.cover_image = cover_image
+                return
+        except (KeyError, AttributeError):
+            pass
+
+        try:
+            cover_image = isbn_cover(self.ISBN, 'librarything')
+            if len(cover_image) > 1000:
+                self.cover_image = cover_image
+                return
+
+        except AttributeError:
+            pass
         try:
             self.image_url = self.goodreads['book']['image_url']
             return
