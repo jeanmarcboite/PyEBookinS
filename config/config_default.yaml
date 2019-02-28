@@ -30,11 +30,12 @@ openlibrary:
   url: "https://openlibrary.org/{}"
 
 librarything:
+  try: "http://covers.librarything.com/devkey/KEY/medium/isbn/0545010225"
   key: '3a88914e5ef7d402e75bdbdcda333f4f'
   url:
     isbn: 'http://www.librarything.com/services/rest/1.1/?method=librarything.ck.getwork&isbn={}&apikey={}'
     id: 'http://www.librarything.com/services/rest/1.1/?method=librarything.ck.getwork&id={}&apikey={}'
-
+    cover: 'http://covers.librarything.com/devkey/{}/medium/isbn/{}'
 anchor: &anchor default_name
 alias: *anchor
 

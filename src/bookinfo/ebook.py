@@ -155,6 +155,14 @@ class BookInfo():
 
     def get_cover(self):
         try:
+            self.cover_image
+            return
+        except AttributeError:
+            try:
+                self.cover_image = isbn_cover(self.ISBN, 'librarything')
+            except AttributeError:
+                pass
+        try:
             self.image_url = self.goodreads['book']['image_url']
             return
         except (AttributeError, KeyError):

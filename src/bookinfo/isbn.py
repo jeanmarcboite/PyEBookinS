@@ -1,6 +1,7 @@
 import time
 import urllib
 import logging
+from urllib.error import HTTPError
 
 from isbnlib import isbn_from_words as _isbn_from_words, cover
 from isbnlib.dev import ISBNLibHTTPError, ISBNLibURLError
@@ -101,6 +102,9 @@ def isbn_from_fcache(words):
 @memory.cache()
 def isbn_cover(isbn, provider='OpenLibrary'):
     url = None
+    if provider == 'librarything':
+        url = config['librarything']['url']['cover'].as_str().\
+               format(config['librarything']['key'], isbn)
     if provider == 'goodreads':
         try:
             url = goodreads_from_isbn(isbn)['book/image_url']
@@ -118,6 +122,9 @@ def isbn_cover(isbn, provider='OpenLibrary'):
 
         except ConnectionResetError:
             pass
+        except HTTPError as e:
+            print(url)
+            logger.info('{}: {}'.format(url, e.msg))
     if provider != 'google':
         return isbn_cover(isbn, 'google')
     return None
