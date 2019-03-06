@@ -98,7 +98,7 @@ def isbn_from_fcache(words):
 
 
 # ol covers: http://covers.openlibrary.org/b/$key/$value-$size.jpg
-
+# http://bigbooksearch.com/books/mrs+dalloway
 @memory.cache()
 def isbn_cover(isbn, provider='OpenLibrary'):
     url = None
