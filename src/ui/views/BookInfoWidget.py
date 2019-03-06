@@ -1,7 +1,7 @@
 from copy import copy
 from pprint import pformat
 
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, QRect
 from PySide2.QtGui import QFont, QIcon, QPixmap
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
@@ -16,17 +16,33 @@ class BookWidget(QWidget):
     def __init__(self, info, parent=None):
         super(BookWidget, self).__init__(parent)
         self.setLayout(QVBoxLayout())
+        self.layout().setAlignment(Qt.AlignTop)
+
         self.info = info
+        top_layout = QHBoxLayout()
+        top_layout.setAlignment(Qt.AlignLeft)
+
         cover_layout = QVBoxLayout()
         try:
-            label = image_label(self.info.cover_image, 400)
+            label = image_label(self.info.cover_image, 300)
         except AttributeError:
-            label = image_url_label(self.info.image_url, 200)
-        #label = image_label(None, 200)
+            label = image_url_label(self.info.image_url, 300)
         cover_layout.addWidget(label)
-        cover_layout.addWidget(QLabel(self.info.title))
-        self.layout().addLayout(cover_layout)
-        self.layout().setAlignment(Qt.AlignTop)
+        cover_layout.addStretch()
+        top_layout.addLayout(cover_layout)
+        description_layout = QVBoxLayout()
+        description_layout.setAlignment(Qt.AlignTop)
+        description_label = QTextEdit(self.info.description)
+        description_label.setMinimumSize(500, 300)
+        description_label.setMaximumSize(800, 300)
+        description_label.resize(800, 300)
+        description_label.setReadOnly(True)
+        description_layout.addWidget(description_label)
+        top_layout.addLayout(description_layout)
+        top_layout.addStretch()
+
+        
+        self.layout().addLayout(top_layout)
 
 
 class InfoWidget(QWidget):
