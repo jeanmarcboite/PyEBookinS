@@ -80,7 +80,11 @@ class BookBrowserWidget(QSplitter):
 
     def populate(self):
         for file in self.files:
+            import time
+            time.sleep(1)
             self.add_item(file)
+            # hope to change it to 'update'
+            self.repaintdate()
 
     def selectionChanged(self, new, old):
         self.info_widget.set_info(self.tree_widget.currentItem().info)
