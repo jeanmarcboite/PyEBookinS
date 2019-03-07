@@ -20,7 +20,6 @@ class MainWindow(QMainWindow):
         try:
             self.browser = BookBrowserWidget(parent=self)
             self.setCentralWidget(self.browser)
-            self.browser.add_items()
 
         except confuse.NotFoundError as e:
             self.setCentralWidget(QLabel('Configuration error: {}'.format(e)))

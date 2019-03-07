@@ -5,7 +5,7 @@ import logging
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QPixmap, QIcon
 from PySide2.QtWidgets import QScrollArea, \
-    QSplitter
+    QSplitter, QFrame, QVBoxLayout, QPushButton
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 from xdg import BaseDirectory
 
@@ -56,13 +56,20 @@ class BookBrowserWidget(QSplitter):
         except AttributeError:
             pass
 
+
         default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
         #self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
         #                                                    default_pixmap)
 
+        self.leftFrame = QFrame()
+        self.leftFrame.setLayout(QVBoxLayout())
+        button = QPushButton('fill items')
+        button.clicked.connect(self.populate)
+        self.leftFrame.layout().addWidget(button)
         self.tree_widget = BookTreeWidget()
         self.tree_widget.selectionChanged = self.selectionChanged
-        self.addWidget(self.tree_widget)
+        self.leftFrame.layout().addWidget(self.tree_widget)
+        self.addWidget(self.leftFrame)
 
         self.info_widget = InfoWidget()
         scroll_area = QScrollArea()
@@ -71,21 +78,23 @@ class BookBrowserWidget(QSplitter):
         scroll_area.resize(800, 600)
         self.addWidget(scroll_area)
 
+    def populate(self):
+        for file in self.files:
+            self.add_item(file)
+
     def selectionChanged(self, new, old):
         self.info_widget.set_info(self.tree_widget.currentItem().info)
 
-    def add_items(self):
-        for file in self.files:
-            info = BookInfo(file)
+    def add_item(self, file):
+        info = BookInfo(file)
 
-            if self.calibre_db:
-                try:
-                    info.calibre = self.calibre_db[info.ISBN]
-                except (KeyError, AttributeError):
-                    pass
+        if self.calibre_db:
+            try:
+                info.calibre = self.calibre_db[info.ISBN]
+            except (KeyError, AttributeError):
+                pass
 
-            self.tree_widget.add_item(info)
-
+        self.tree_widget.add_item(info)
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
