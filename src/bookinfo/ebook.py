@@ -1,4 +1,5 @@
 import logging
+import os
 from pprint import pformat
 
 import requests
@@ -28,12 +29,16 @@ def _detect_language(html):
 
 
 def get_str(item):
+    if item is None:
+        return None
     if isinstance(item, (list, tuple)):
         if len(item) == 0:
             return None
         else:
             return get_str(item[0])
 
+    if not isinstance(item, str):
+        print(type(item))
     assert isinstance(item, str)
     return item
 
@@ -67,8 +72,9 @@ def book_info(filename, **kwargs):
 
     try:
         book = epub.read_epub(filename)
-    except KeyError as ke:
-        logger.error(ke)
+    except (AttributeError, KeyError) as ake:
+        logger.error('reading {}'.format(filename))
+        logger.error(ake)
         return info
 
     metadata = {}
@@ -140,11 +146,13 @@ class BookInfo():
     def __init__(self, filename, **kwargs):
         super(BookInfo, self).__init__(**kwargs)
         self.filename = filename
-        self.logger.debug('Read %s', self.filename)
 
         for k, v in book_info(filename).items():
             self.__setattr__(k, v)
 
+        cover = os.path.join(os.path.dirname(filename), 'cover.jpg')
+        if os.path.isfile(cover):
+            self.cover_image = open(cover, 'rb').read()
         self.get_cover()
         # fix author name, goodreads usually better
         try:

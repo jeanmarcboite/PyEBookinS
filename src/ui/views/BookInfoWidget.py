@@ -34,14 +34,13 @@ class BookWidget(QWidget):
         description_layout.setAlignment(Qt.AlignTop)
         description_label = QTextEdit(self.info.description)
         description_label.setMinimumSize(500, 300)
-        description_label.setMaximumSize(800, 300)
-        description_label.resize(800, 300)
+        description_label.setMaximumSize(700, 300)
+        description_label.resize(700, 300)
         description_label.setReadOnly(True)
         description_layout.addWidget(description_label)
         top_layout.addLayout(description_layout)
         top_layout.addStretch()
 
-        
         self.layout().addLayout(top_layout)
 
 

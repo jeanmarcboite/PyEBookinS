@@ -7,9 +7,13 @@ fcache:
   isbn: isbn
 calibre:
   calibre
-books:
+tbooks:
   - ebooks
-  - ncalibre
+  - calibre
+books:
+  - CalibreLibrary
+t1books:
+  - ebook
 ebook_extensions: ["epub"]
 
 logging:

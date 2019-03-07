@@ -24,7 +24,8 @@ class BookBrowserWidget(QSplitter):
         super(BookBrowserWidget, self).__init__(Qt.Horizontal, parent)
 
         files = []
-        for b in config['books']:
+        books = config['books']
+        for b in books:
             book = b.as_str()
             if os.path.isfile(book):
                 files.append(book)
