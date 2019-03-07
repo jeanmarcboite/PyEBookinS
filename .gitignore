@@ -49,6 +49,8 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+profile
+profile.*
 
 # Translations
 *.mo
@@ -114,3 +116,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# secrets
+accessKeys.csv
