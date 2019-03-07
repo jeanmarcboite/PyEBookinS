@@ -7,10 +7,10 @@ fcache:
   isbn: isbn
 calibre:
   calibre
-tbooks:
+books:
   - ebooks
   - calibre
-books:
+tbooks:
   - CalibreLibrary
 t1books:
   - ebook

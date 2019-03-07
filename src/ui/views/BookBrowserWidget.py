@@ -12,6 +12,7 @@ from xdg import BaseDirectory
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import book_info, BookInfo
+from src.ui.views.BookTreeWidget import BookTreeWidget
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
@@ -23,25 +24,25 @@ class BookBrowserWidget(QSplitter):
     def __init__(self, parent=None):
         super(BookBrowserWidget, self).__init__(Qt.Horizontal, parent)
 
-        files = []
+        self.files = []
         books = config['books']
         for b in books:
             book = b.as_str()
             if os.path.isfile(book):
-                files.append(book)
+                self.files.append(book)
             elif os.path.isdir(book):
-                files.extend(BookBrowserWidget.find_files(book.as_str))
+                self.files.extend(BookBrowserWidget.find_files(book.as_str))
             else:
                 data_dir = BaseDirectory.save_data_path('{}/{}'.format(config['application_name'],
                                                                        book))
                 if os.path.isdir(data_dir):
-                    files.extend(BookBrowserWidget.find_files(data_dir))
+                    self.files.extend(BookBrowserWidget.find_files(data_dir))
                 else:
                     BookBrowserWidget.logger.warning("book '%s' not found")
 
-        BookBrowserWidget.logger.info("Import %d files", len(files))
+        BookBrowserWidget.logger.info("Import %d files", len(self.files))
 
-        calibre_db = None
+        self.calibre_db = None
         try:
             calibre = config['calibre'].as_str()
             if not os.path.exists(calibre):
@@ -51,13 +52,15 @@ class BookBrowserWidget(QSplitter):
                 calibre = os.path.join(calibre, 'metadata.db')
 
             if os.path.isfile(calibre):
-                calibre_db = CalibreDB(database='sqlite:///' + calibre)
+                self.calibre_db = CalibreDB(database='sqlite:///' + calibre)
         except AttributeError:
             pass
 
         default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
-        self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
-                                                            default_pixmap)
+        #self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
+        #                                                    default_pixmap)
+
+        self.tree_widget = BookTreeWidget()
         self.tree_widget.selectionChanged = self.selectionChanged
         self.addWidget(self.tree_widget)
 
@@ -69,7 +72,20 @@ class BookBrowserWidget(QSplitter):
         self.addWidget(scroll_area)
 
     def selectionChanged(self, new, old):
-        self.info_widget.set_info(self.tree_widget.currentItem().file)
+        self.info_widget.set_info(self.tree_widget.currentItem().info)
+
+    def add_items(self):
+        for file in self.files:
+            info = BookInfo(file)
+
+            if self.calibre_db:
+                try:
+                    info.calibre = self.calibre_db[info.ISBN]
+                except (KeyError, AttributeError):
+                    pass
+
+            self.tree_widget.add_item(info)
+
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):

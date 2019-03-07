@@ -18,6 +18,9 @@ class MainWindow(QMainWindow):
         self.resize(config['window']['width'].as_number(), config['window']['height'].as_number())
 
         try:
-            self.setCentralWidget(BookBrowserWidget(parent=self))
+            self.browser = BookBrowserWidget(parent=self)
+            self.setCentralWidget(self.browser)
+            self.browser.add_items()
+
         except confuse.NotFoundError as e:
             self.setCentralWidget(QLabel('Configuration error: {}'.format(e)))

@@ -5,7 +5,7 @@ from PySide2.QtCore import Qt, QRect
 from PySide2.QtGui import QFont, QIcon, QPixmap
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
-from PySide2 import QtWebEngineWidgets
+from PySide2.QtCore import SIGNAL
 from src.ui.views.icons import flag_label, image_url_label, image_label
 import logging
 logger = logging.getLogger('gui')
@@ -26,7 +26,10 @@ class BookWidget(QWidget):
         try:
             label = image_label(self.info.cover_image, 300)
         except AttributeError:
-            label = image_url_label(self.info.image_url, 300)
+            try:
+                label = image_url_label(self.info.image_url, 300)
+            except AttributeError:
+                label = image_label(None, 300)
         cover_layout.addWidget(label)
         cover_layout.addStretch()
         top_layout.addLayout(cover_layout)

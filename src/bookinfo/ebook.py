@@ -114,7 +114,10 @@ def book_info(filename, **kwargs):
     try:
         info['ISBN'] = info['identifiers']['ISBN']
     except KeyError:
-        author = ', '.join(list(reversed(info['author'].split())))
+        author = ''
+        if info['author'] is not None:
+            author = ', '.join(list(reversed(info['author'].split())))
+
         info['ISBN'] = isbn_from_words('{} {}'.format(author, info['title']))
         logger.info('{}, no isbn in epub, found {} from google'.format(info['title'], info['ISBN']))
 
@@ -207,7 +210,7 @@ class BookInfo():
                 pass
 
     def __repr__(self):
-        d = self.__dict__
+        d = self.__dict__.copy()
         try:
             del d['cover_image']
         except:
