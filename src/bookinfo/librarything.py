@@ -69,7 +69,7 @@ def librarything_html(url):
         try:
             return requests.get(url)
         except (ConnectionResetError, socket.timeout):
-            time.sleep(1)
+            time.sleep(0.5)
             retry += 1
 
 @memory.cache()

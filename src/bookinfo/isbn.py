@@ -53,7 +53,7 @@ def isbn_from_words(words):
                     ISBNLibHTTPError,
                     socket.timeout,
                     ISBNLibURLError):
-                time.sleep(1)
+                time.sleep(0.5)
                 retry += 1
                 logger.debug("'{}' not found, retrying".format(words))
 
@@ -88,7 +88,7 @@ def isbn_from_fcache(words):
                     ISBNLibHTTPError,
                     socket.timeout,
                     ISBNLibURLError):
-                time.sleep(1)
+                time.sleep(0.5)
                 retry += 1
                 logger.debug("'{}' not found, retrying".format(words))
         if filecache is not None:

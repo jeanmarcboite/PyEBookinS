@@ -149,6 +149,9 @@ def book_info(filename, **kwargs):
 
     return info
 
+@memory.cache()
+def curl(url):
+    return urllib.request.urlopen(url).read()
 
 class BookInfo():
     logger = logging.getLogger('bookinfo')
@@ -182,8 +185,7 @@ class BookInfo():
             pass
 
         try:
-            cover_url = self.openlibrary['cover']['large']
-            cover_image = urllib.request.urlopen(cover_url).read()
+            cover_image = curl(self.openlibrary['cover']['large'])
             if len(cover_image) > 1000:
                 self.cover_image = cover_image
                 return
