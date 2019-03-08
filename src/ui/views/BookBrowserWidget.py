@@ -10,7 +10,7 @@ from xdg import BaseDirectory
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import BookInfo
-from src.ui.views.BookTreeView import BookTreeView, BookItem
+from src.ui.views.BookTreeView import BookTreeView, BookItem, AuthorItem
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
@@ -95,8 +95,10 @@ class BookBrowserWidget(QSplitter):
     def item_selected(self, index):
         item = index.model().itemFromIndex(index)
         # need TODO something for AuthorItem
+        if type(item) is AuthorItem:
+            self.info_widget.set_author_info(item.wikipedia)
         if type(item) is BookItem:
-            self.info_widget.set_info(item.info)
+            self.info_widget.set_book_info(item.info)
 
     def add_item(self, file):
         info = BookInfo(file)
