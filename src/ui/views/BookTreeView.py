@@ -64,7 +64,6 @@ class BookTreeView(QTreeView):
                 author_item = AuthorItem(self.item_model.invisibleRootItem(),
                                          info.author)
                 author_item.wikipedia = 'https://en.wikipedia.org/wiki/{}'.format('_'.join(info.author.split()))
-                print(author_item.wikipedia)
                 self.authors[info.author] = author_item
             info_item = BookItem(author_item, info)
             pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(info.language[0]))
