@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import logging
 
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, QModelIndex
 from PySide2.QtGui import QPixmap, QIcon
 from PySide2.QtWidgets import QScrollArea, \
     QSplitter, QFrame, QVBoxLayout, QPushButton
@@ -12,7 +12,8 @@ from xdg import BaseDirectory
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import book_info, BookInfo
-from src.ui.views.BookTreeWidget import BookTreeWidget
+from src.ui.views.BookTreeModel import BookItem
+from src.ui.views.BookTreeWidget import BookTreeWidget, BookTreeView
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
@@ -61,15 +62,9 @@ class BookBrowserWidget(QSplitter):
         #self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
         #                                                    default_pixmap)
 
-        self.leftFrame = QFrame()
-        self.leftFrame.setLayout(QVBoxLayout())
-        button = QPushButton('fill items')
-        button.clicked.connect(self.populate)
-        self.leftFrame.layout().addWidget(button)
-        self.tree_widget = BookTreeWidget()
-        self.tree_widget.selectionChanged = self.selectionChanged
-        self.leftFrame.layout().addWidget(self.tree_widget)
-        self.addWidget(self.leftFrame)
+        self.addWidget(self.left_frame())
+        self.populate()
+        #self.addWidget(self.middle_frame())
 
         self.info_widget = InfoWidget()
         scroll_area = QScrollArea()
@@ -78,18 +73,53 @@ class BookBrowserWidget(QSplitter):
         scroll_area.resize(800, 600)
         self.addWidget(scroll_area)
 
+    def left_frame(self):
+        frame = QFrame()
+        frame.setLayout(QVBoxLayout())
+        button = QPushButton('fill items')
+        button.clicked.connect(self.populate)
+        frame.layout().addWidget(button)
+
+        self.book_tree_view = BookTreeView()
+        self.book_tree_view.clicked[QModelIndex].connect(self.item_selected)
+        frame.layout().addWidget(self.book_tree_view)
+
+        return frame
+
     def populate(self):
         for file in self.files:
+            self.add_item(self.book_tree_view, file)
+
+    def middle_frame(self):
+        frame = QFrame()
+        frame.setLayout(QVBoxLayout())
+        button = QPushButton('fill items')
+        button.clicked.connect(self.populate_middle)
+        frame.layout().addWidget(button)
+
+        self.tree_widget = BookTreeWidget()
+        self.tree_widget.selectionChanged = self.selectionChanged
+        frame.layout().addWidget(self.tree_widget)
+    def populate_middle(self):
+        for file in self.files:
             import time
-            time.sleep(1)
-            self.add_item(file)
+            time.sleep(0.1)
+            self.add_item(self.tree_widget, file)
             # hope to change it to 'update'
-            self.repaintdate()
+            self.repaint()
+
+    def item_selected(self, index):
+        # item = myStandardItemModel.itemFromIndex(index)
+        # Do stuff with the item ...
+        item = self.book_tree_view.model().itemFromIndex(index)
+        # need TODO something for AuthorItem
+        if type(item) is BookItem:
+            self.info_widget.set_info(item.info)
 
     def selectionChanged(self, new, old):
         self.info_widget.set_info(self.tree_widget.currentItem().info)
 
-    def add_item(self, file):
+    def add_item(self, widget, file):
         info = BookInfo(file)
 
         if self.calibre_db:
@@ -98,7 +128,7 @@ class BookBrowserWidget(QSplitter):
             except (KeyError, AttributeError):
                 pass
 
-        self.tree_widget.add_item(info)
+        widget.add_item(info)
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
