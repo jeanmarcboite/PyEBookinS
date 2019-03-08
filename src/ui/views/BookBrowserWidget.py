@@ -13,7 +13,7 @@ from config import AppState
 from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import book_info, BookInfo
 from src.ui.views.BookTreeModel import BookItem
-from src.ui.views.BookTreeWidget import BookTreeWidget, BookTreeView
+from src.ui.views.BookTreeView import BookTreeView
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config

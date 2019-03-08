@@ -2,11 +2,6 @@ from PySide2 import QtCore
 from PySide2.QtGui import QStandardItem
 
 
-class BookTreeItem(QStandardItem):
-    def __init__(self, text, data, parent=None):
-        super(TreeModel, self).__init__(text)
-        self.data = data
-
 class AuthorItem(QStandardItem):
     def __init__(self, parent, name):
         super(AuthorItem, self).__init__(name)
@@ -16,11 +11,14 @@ class AuthorItem(QStandardItem):
     def __lt__(self, other):
         return self.sort_text < other.sort_text
 
+
 class BookItem(QStandardItem):
     def __init__(self, parent, info):
         super(BookItem, self).__init__(info.title)
         self.info = info
         parent.appendRow(self)
+
+
 class TreeItem(object):
     def __init__(self, data, parent=None):
         self.parentItem = parent
