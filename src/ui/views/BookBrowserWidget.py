@@ -1,6 +1,6 @@
+import logging
 import os
 from pathlib import Path
-import logging
 
 from PySide2.QtCore import Qt, QModelIndex
 from PySide2.QtGui import QPixmap, QIcon
@@ -11,12 +11,12 @@ from xdg import BaseDirectory
 
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
-from src.bookinfo.ebook import book_info, BookInfo
-from src.ui.views.BookTreeModel import BookItem
-from src.ui.views.BookTreeView import BookTreeView
+from src.bookinfo.ebook import BookInfo
+from src.ui.views.BookTreeView import BookTreeView, BookItem
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
+
 
 # noinspection PyPep8Naming
 class BookBrowserWidget(QSplitter):
@@ -48,7 +48,7 @@ class BookBrowserWidget(QSplitter):
             calibre = config['calibre'].as_str()
             if not os.path.exists(calibre):
                 calibre = BaseDirectory.save_data_path('{}/{}'.format(config['application_name'],
-                                                                        calibre))
+                                                                      calibre))
             if os.path.isdir(calibre):
                 calibre = os.path.join(calibre, 'metadata.db')
 
@@ -57,14 +57,8 @@ class BookBrowserWidget(QSplitter):
         except AttributeError:
             pass
 
-
-        default_pixmap = QPixmap("../resources/icons/iconfinder_book_285636.png")
-        #self.tree_widget = BookBrowserWidget.FileTreeWidget(BookBrowserWidget.files_by(files, 'author', calibre_db),
-        #                                                    default_pixmap)
-
         self.addWidget(self.left_frame())
         self.populate()
-        #self.addWidget(self.middle_frame())
 
         self.info_widget = InfoWidget()
         scroll_area = QScrollArea()
@@ -90,27 +84,7 @@ class BookBrowserWidget(QSplitter):
         for file in self.files:
             self.add_item(self.book_tree_view, file)
 
-    def middle_frame(self):
-        frame = QFrame()
-        frame.setLayout(QVBoxLayout())
-        button = QPushButton('fill items')
-        button.clicked.connect(self.populate_middle)
-        frame.layout().addWidget(button)
-
-        self.tree_widget = BookTreeWidget()
-        self.tree_widget.selectionChanged = self.selectionChanged
-        frame.layout().addWidget(self.tree_widget)
-    def populate_middle(self):
-        for file in self.files:
-            import time
-            time.sleep(0.1)
-            self.add_item(self.tree_widget, file)
-            # hope to change it to 'update'
-            self.repaint()
-
     def item_selected(self, index):
-        # item = myStandardItemModel.itemFromIndex(index)
-        # Do stuff with the item ...
         item = self.book_tree_view.model().itemFromIndex(index)
         # need TODO something for AuthorItem
         if type(item) is BookItem:
@@ -157,47 +131,3 @@ class BookBrowserWidget(QSplitter):
             except AttributeError:
                 pass
         return by
-
-    class FileTreeWidget(QTreeWidget):
-        class AuthorItem(QTreeWidgetItem):
-            def __init__(self, parent, name):
-                super(BookBrowserWidget.FileTreeWidget.AuthorItem, self).__init__(parent)
-                self.setText(0, name)
-                self.sort_text = ' '.join([name.split(" ")[-1],  name])
-
-            def __lt__(self, other):
-                return self.sort_text < other.sort_text
-
-        class Item(QTreeWidgetItem):
-            def __init__(self, parent, file):
-                super(BookBrowserWidget.FileTreeWidget.Item, self).__init__(parent)
-                self.file = file
-                self.setText(0, file.title)
-
-        def __init__(self, files, default_pixmap, **kwargs):
-            super(BookBrowserWidget.FileTreeWidget, self).__init__(**kwargs)
-            self.setColumnCount(1)
-            header = QTreeWidgetItem(["Author"])
-            self.setHeaderItem(header)
-            root = QTreeWidgetItem(self, ["Authors"])
-            root.setExpanded(True)
-            for name in files.keys():
-                name_item = BookBrowserWidget.FileTreeWidget.AuthorItem(root, name)
-                for file in files[name]:
-                    file_item = BookBrowserWidget.FileTreeWidget.Item(name_item, file)
-                    pixmap = QPixmap()
-                    try:
-                        pixmap = QPixmap()
-                        pixmap.loadFromData(file.cover_image)
-                    except AttributeError:
-                        pixmap = default_pixmap
-
-                    #  af, ar, bg, bn, ca, cs, cy, da, de, el,
-                    #  en, es, et, fa, fi, fr, gu, he, hi, hr,
-                    #  hu, id, it, ja, kn, ko, lt, lv, mk, ml,
-                    #  mr, ne, nl, no, pa, pl, pt, ro, ru, sk,
-                    #  sl, so, sq, sv, sw, ta, te, th, tl, tr,
-                    #  uk, ur, vi, zh-cn, zh-tw
-                    pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(file.language[0]))
-                    file_item.setIcon(0, QIcon(pixmap))
-            self.sortByColumn(0, Qt.AscendingOrder)

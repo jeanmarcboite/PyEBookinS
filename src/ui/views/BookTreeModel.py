@@ -1,22 +1,4 @@
 from PySide2 import QtCore
-from PySide2.QtGui import QStandardItem
-
-
-class AuthorItem(QStandardItem):
-    def __init__(self, parent, name):
-        super(AuthorItem, self).__init__(name)
-        self.sort_text = ' '.join([name.split(" ")[-1], name])
-        parent.appendRow(self)
-
-    def __lt__(self, other):
-        return self.sort_text < other.sort_text
-
-
-class BookItem(QStandardItem):
-    def __init__(self, parent, info):
-        super(BookItem, self).__init__(info.title)
-        self.info = info
-        parent.appendRow(self)
 
 
 class TreeItem(object):
