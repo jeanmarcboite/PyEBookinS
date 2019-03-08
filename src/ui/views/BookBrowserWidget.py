@@ -95,7 +95,6 @@ class BookBrowserWidget(QSplitter):
     def item_selected(self, index):
         item = index.model().itemFromIndex(index)
         # need TODO something for AuthorItem
-        print(type(item))
         if type(item) is BookItem:
             self.info_widget.set_info(item.info)
 

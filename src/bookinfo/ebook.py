@@ -140,6 +140,12 @@ def book_info(filename, **kwargs):
         except (AttributeError, KeyError):
             info[k] = f[1](info['ISBN'])
 
+    try:
+        if info['description'] is None:
+            info['description'] = info['goodreads']['book']['description']
+    except KeyError:
+        pass
+
     return info
 
 
