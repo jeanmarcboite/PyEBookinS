@@ -1,16 +1,17 @@
-from copy import copy
-from pprint import pformat
+import logging
 
-from PySide2.QtCore import Qt, QRect
+from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont, QIcon, QPixmap
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget, QTabWidget, QTextEdit
-from PySide2.QtCore import SIGNAL
-from src.ui.views.icons import flag_label, image_url_label, image_label
-import logging
-logger = logging.getLogger('gui')
+
 from config import AppState
+from src.ui.views.icons import flag_label, image_url_label, image_label
+
+logger = logging.getLogger('gui')
+
 config = AppState().config
+
 
 class BookWidget(QWidget):
     def __init__(self, info, parent=None):
@@ -57,6 +58,7 @@ class InfoWidget(QWidget):
         except AttributeError as e:
             logger.warning('InfoWidget {}: {}'.format(self.info.title, e))
 
+
 class WebInfoWidget(QWidget):
     def __init__(self, site: str, info, parent=None):
         super(WebInfoWidget, self).__init__(parent)
@@ -88,6 +90,7 @@ class RawWidget(InfoWidget):
 
     def add_widgets(self):
         pass
+
 
 class BookInfoWidget(QWidget):
     def __init__(self, info, parent=None):
@@ -126,7 +129,7 @@ class BookInfoWidget(QWidget):
                 self.info.__getattribute__(site).url
                 information_widget.addTab(WebInfoWidget(site, self.info),
                                           QIcon(QPixmap('../resources/icons/{}.png'.format(site))),
-                                        site.capitalize())
+                                          site.capitalize())
             except AttributeError:
                 # no tab
                 pass

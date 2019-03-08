@@ -93,8 +93,9 @@ class BookBrowserWidget(QSplitter):
             self.add_item(file)
 
     def item_selected(self, index):
-        item = self.book_tree_view.model().itemFromIndex(index)
+        item = index.model().itemFromIndex(index)
         # need TODO something for AuthorItem
+        print(type(item))
         if type(item) is BookItem:
             self.info_widget.set_info(item.info)
 

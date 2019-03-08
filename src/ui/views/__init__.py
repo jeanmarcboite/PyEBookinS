@@ -1,14 +1,10 @@
-__all__ = ['MainWindow', 'BookBrowserWidget']
-
-import os
 import confuse
-from config import AppState
-from xdg import BaseDirectory
-
 from PySide2.QtWidgets import QMainWindow, QLabel
 
+from config import AppState
+from .BookBrowserWidget import BookBrowserWidget
+
 config = AppState().config
-from src.ui.views.BookBrowserWidget import BookBrowserWidget
 
 
 class MainWindow(QMainWindow):
