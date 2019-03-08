@@ -1,5 +1,6 @@
 import logging
 import os
+import urllib
 from pprint import pformat
 
 import requests
@@ -181,6 +182,16 @@ class BookInfo():
             pass
 
         try:
+            cover_url = self.openlibrary['cover']['large']
+            cover_image = urllib.request.urlopen(cover_url).read()
+            if len(cover_image) > 1000:
+                self.cover_image = cover_image
+                return
+        except (KeyError, AttributeError):
+            pass
+
+        try:
+
             cover_image = librarything_cover(self.librarything['url'])
             if len(cover_image) > 1000:
                 self.cover_image = cover_image
