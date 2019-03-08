@@ -3,10 +3,8 @@ import os
 from pathlib import Path
 
 from PySide2.QtCore import Qt, QModelIndex
-from PySide2.QtGui import QPixmap, QIcon
 from PySide2.QtWidgets import QScrollArea, \
     QSplitter, QFrame, QVBoxLayout, QPushButton
-from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
 from xdg import BaseDirectory
 
 from config import AppState
@@ -43,7 +41,15 @@ class BookBrowserWidget(QSplitter):
 
         BookBrowserWidget.logger.info("Import %d files", len(self.files))
 
-        self.calibre_db = None
+        self.calibre_db = self.add_calibre_db()
+
+        self.book_tree_view = self.add_book_tree_view()
+        self.populate()
+
+        self.info_widget = self.add_info_widget()
+
+    @staticmethod
+    def add_calibre_db():
         try:
             calibre = config['calibre'].as_str()
             if not os.path.exists(calibre):
@@ -53,36 +59,38 @@ class BookBrowserWidget(QSplitter):
                 calibre = os.path.join(calibre, 'metadata.db')
 
             if os.path.isfile(calibre):
-                self.calibre_db = CalibreDB(database='sqlite:///' + calibre)
+                return CalibreDB(database='sqlite:///' + calibre)
         except AttributeError:
-            pass
+            return None
+        return None
 
-        self.addWidget(self.left_frame())
-        self.populate()
-
-        self.info_widget = InfoWidget()
-        scroll_area = QScrollArea()
-        scroll_area.setWidget(self.info_widget)
-        scroll_area.setWidgetResizable(True)
-        scroll_area.resize(800, 600)
-        self.addWidget(scroll_area)
-
-    def left_frame(self):
+    def add_book_tree_view(self):
         frame = QFrame()
         frame.setLayout(QVBoxLayout())
         button = QPushButton('fill items')
         button.clicked.connect(self.populate)
         frame.layout().addWidget(button)
 
-        self.book_tree_view = BookTreeView()
-        self.book_tree_view.clicked[QModelIndex].connect(self.item_selected)
-        frame.layout().addWidget(self.book_tree_view)
+        book_tree_view = BookTreeView()
+        book_tree_view.clicked[QModelIndex].connect(self.item_selected)
+        frame.layout().addWidget(book_tree_view)
+        self.addWidget(frame)
 
-        return frame
+        return book_tree_view
+
+    def add_info_widget(self):
+        info_widget = InfoWidget()
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(info_widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.resize(800, 600)
+        self.addWidget(scroll_area)
+
+        return info_widget
 
     def populate(self):
         for file in self.files:
-            self.add_item(self.book_tree_view, file)
+            self.add_item(file)
 
     def item_selected(self, index):
         item = self.book_tree_view.model().itemFromIndex(index)
@@ -90,19 +98,15 @@ class BookBrowserWidget(QSplitter):
         if type(item) is BookItem:
             self.info_widget.set_info(item.info)
 
-    def selectionChanged(self, new, old):
-        self.info_widget.set_info(self.tree_widget.currentItem().info)
-
-    def add_item(self, widget, file):
+    def add_item(self, file):
         info = BookInfo(file)
 
         if self.calibre_db:
             try:
                 info.calibre = self.calibre_db[info.ISBN]
-            except (KeyError, AttributeError):
-                pass
-
-        widget.add_item(info)
+            except (KeyError, AttributeError) as kae:
+                BookBrowserWidget.logger.debug(kae)
+        self.book_tree_view.add_item(info)
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
@@ -110,24 +114,3 @@ class BookBrowserWidget(QSplitter):
         for extension in extensions:
             files.extend(Path(dirpath).glob('**/*.' + extension))
         return files
-
-    @staticmethod
-    def files_by(files, key, calibre_db=None):
-        by = dict()
-        for file in files:
-            info = BookInfo(file)
-
-            if calibre_db:
-                try:
-                    info.calibre = calibre_db[info.ISBN]
-                except (KeyError, AttributeError):
-                    pass
-
-            try:
-                attr = getattr(info, key)
-                if attr not in by.keys():
-                    by[attr] = []
-                by[attr].append(info)
-            except AttributeError:
-                pass
-        return by
