@@ -178,6 +178,21 @@ class BookInfo():
         # if calibre_db:
         # info['calibre'] = calibre_db[info['isbn']]
 
+    def title_and_publication_date(self):
+        if not self.goodreads:
+            return self.title
+        try:
+            work = self.goodreads['book/work']
+            title = '{} {}-{}-{}'.format(self.title,
+                                    work['original_publication_year'],
+                                        work['original_publication_month'],
+                                        work['original_publication_day'])
+            return title
+        except KeyError as e:
+            print(e)
+            return self.title
+
+
     def get_cover(self):
 
         try:

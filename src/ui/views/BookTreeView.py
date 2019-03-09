@@ -18,7 +18,7 @@ class AuthorItem(QStandardItem):
 
 class BookItem(QStandardItem):
     def __init__(self, parent, info):
-        super(BookItem, self).__init__(info.title)
+        super(BookItem, self).__init__(info.title_and_publication_date())
         self.info = info
         parent.appendRow(self)
 
