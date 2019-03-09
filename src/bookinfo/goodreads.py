@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ElementTree
 from joblib import Memory
 from config import AppState
 from bs4 import BeautifulSoup
+import os, tempfile
 
 config = AppState().config
 memory = Memory(config['cache']['directory'].as_filename(),
@@ -20,15 +21,21 @@ class Goodreads(dict):
             'isbn',
             'average_rating','ratings_count',
             'link',
-            'num_pages'
+            'publication_year',
+             'publication_day',
+            'publication_month',
+            'publisher',
+            'asin',
+           'num_pages'
         ],
         'book/work': [
             'id',
-            'ratings_sum', 'ratings_count', 'rating_dist'
+            'ratings_sum', 'ratings_count', 'rating_dist',
             'original_publication_year',
             'original_publication_month',
             'original_publication_day',
             'original_title',
+            'rating_dist'
         ],
         'book/authors/author': [
             'id', 'name', 'image_url', 'link',
@@ -70,10 +77,15 @@ def ebook_goodreads_response(goodreads_id, id_type='id'):
 
 def goodreads_from(goodreads_response):
     if goodreads_response.ok:
-        with open('/home/box/tmp/goodreads', 'w') as output_file:
-            output_file.write(goodreads_response.content.decode("utf-8") )
         root = ElementTree.fromstring(goodreads_response.content.decode("utf-8"))
-        return Goodreads(root)
+        goodreads = Goodreads(root)
+        tmp = os.path.join(tempfile.tempdir or '/tmp', 'goodreads', goodreads['book']['title'])
+        if not os.path.exists(os.path.dirname(tmp)):
+            os.mkdir(os.path.dirname(tmp))
+        with open(tmp, 'w') as output_file:
+            output_file.write(goodreads_response.content.decode("utf-8") )
+
+        return goodreads
     return {}
 
 

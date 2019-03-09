@@ -64,8 +64,11 @@ def get_language(book):
 
 @memory.cache()
 def book_info(filename, **kwargs):
-    info = {}
     logger = logging.getLogger('bookinfo')
+
+    info = {}
+    metadata = {}
+
     fields = {
         'DC': ['language', 'title', 'creator', 'source', 'subject',
                'contributor', 'publisher', 'rights', 'coverage', 'date', 'description']
@@ -78,7 +81,6 @@ def book_info(filename, **kwargs):
         logger.error(ake)
         return info
 
-    metadata = {}
 
     for namespace in fields.keys():
         metadata[namespace] = {}
