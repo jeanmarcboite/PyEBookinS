@@ -73,13 +73,6 @@ class BookBrowserWidget(QSplitter):
 
         book_tree_view = BookTreeView()
         book_tree_view.clicked[QModelIndex].connect(self.item_selected)
-        book_tree_view.hideColumn(2)
-        print(book_tree_view.isColumnHidden(2))
-        book_tree_view.setColumnHidden(2, True)
-        print(book_tree_view.isColumnHidden(2))
-        book_tree_view.setColumnWidth(0, 300)
-        book_tree_view.setHeaderHidden(True)
-        book_tree_view.setWordWrap(True)
         frame.layout().addWidget(book_tree_view)
         self.addWidget(frame)
 
@@ -130,6 +123,8 @@ class BookBrowserWidget(QSplitter):
                 BookBrowserWidget.logger.debug(kae)
         self.book_tree_view.add_item(info)
         self.book_tree_view.model().sort(2)
+        self.book_tree_view.resizeColumnToContents(0)
+        self.book_tree_view.hideColumn(2)
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):

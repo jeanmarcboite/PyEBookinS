@@ -11,7 +11,7 @@ class AuthorItem():
         sort_text = ' '.join([name.split(" ")[-1], name])
         self.item = QStandardItem(name)
         self.item.info = name
-        items = [self.item, QStandardItem('date'), QStandardItem(sort_text)]
+        items = [self.item, QStandardItem(''), QStandardItem(sort_text)]
         parent.appendRow(items)
 
     def appendRow(self, items):
@@ -55,10 +55,8 @@ class BookTreeView(QTreeView):
     def __init__(self, **kwargs):
         super(BookTreeView, self).__init__(**kwargs)
         self.item_model = QStandardItemModel()
-        headerLabels = ["Name", "Date"]
-        self.setColumnHidden(3, True)
+        headerLabels = ["Name", "Date", "Sort Column"]
         self.item_model.setHorizontalHeaderLabels(headerLabels)
-        self.hideColumn(1)
         self.authors = {}
         use_proxy = False
         if use_proxy:
