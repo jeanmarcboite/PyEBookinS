@@ -10,7 +10,7 @@ class AuthorItem():
     def __init__(self, parent, name):
         sort_text = ' '.join([name.split(" ")[-1], name])
         self.item = QStandardItem(name)
-        self.item.info = name
+        self.item.info = self
         items = [self.item, QStandardItem(''), QStandardItem(sort_text)]
         parent.appendRow(items)
 
@@ -24,11 +24,11 @@ class AuthorItem():
 class BookItem():
     def __init__(self, parent, info):
         pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(info.language[0]))
-        info_item = QStandardItem(info.title)
-        info_item.setIcon(QIcon(pixmap))
-        info_item.info = info
+        item = QStandardItem(info.title)
+        item.setIcon(QIcon(pixmap))
+        item.info = info
         publication = str(info.publication_date())
-        items = [info_item, QStandardItem(publication), QStandardItem(publication+info.title)]
+        items = [item, QStandardItem(publication), QStandardItem(publication+info.title)]
         parent.appendRow(items)
 
 

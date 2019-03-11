@@ -97,20 +97,13 @@ class BookBrowserWidget(QSplitter):
             print('author')
             item = index.model().item(index.row())
             print(type(item), item.info)
+            self.info_widget.set_author_info(item.info.wikipedia)
         else:
             print('book')
             parent_item = index.model().item(index.parent().row())
             print(type(parent_item), parent_item.info)
             item = parent_item.child(index.row())
             print(type(item), item.info)
-        print(index.row(), index.column())
-        print(type(item), item.data())
-        print(type(index.model()))
-        print(type(index.parent()))
-        print(index.parent().row())
-        if type(item) is AuthorItem:
-            self.info_widget.set_author_info(item.wikipedia)
-        if type(item) is BookItem:
             self.info_widget.set_book_info(item.info)
 
     def add_item(self, file):
