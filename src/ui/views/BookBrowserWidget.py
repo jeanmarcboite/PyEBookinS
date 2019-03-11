@@ -95,7 +95,7 @@ class BookBrowserWidget(QSplitter):
     def item_selected(self, index):
         if (index.parent().row() < 0):
             item = index.model().item(index.row())
-            self.info_widget.set_author_info(item.info.wikipedia)
+            self.info_widget.set_author_info(item.info.wikipedia())
         else:
             parent_item = index.model().item(index.parent().row())
             item = parent_item.child(index.row())

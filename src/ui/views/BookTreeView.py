@@ -9,10 +9,18 @@ from PySide2.QtWidgets import QTreeView
 class AuthorItem():
     def __init__(self, parent, name):
         sort_text = ' '.join([name.split(" ")[-1], name])
+        self.name = name
         self.item = QStandardItem(name)
         self.item.info = self
+        self.language = None
         items = [self.item, QStandardItem(''), QStandardItem(sort_text)]
         parent.appendRow(items)
+
+    def wikipedia(self):
+        language = self.language
+        if language is None:
+            language = 'en'
+        return 'https://{}.wikipedia.org/wiki/{}'.format(language, '_'.join(self.name.split()))
 
     def appendRow(self, items):
         self.item.appendRow(items)
@@ -75,8 +83,9 @@ class BookTreeView(QTreeView):
             except KeyError:
                 author_item = AuthorItem(self.item_model.invisibleRootItem(),
                                          info.author)
-                author_item.wikipedia = 'https://en.wikipedia.org/wiki/{}'.format('_'.join(info.author.split()))
                 self.authors[info.author] = author_item
+            if author_item.language is None:
+                author_item.language = info.language[0]
             info_item = BookItem(author_item, info)
 
         except (AttributeError, KeyError) as e:
