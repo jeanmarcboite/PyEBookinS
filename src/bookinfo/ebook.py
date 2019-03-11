@@ -178,16 +178,22 @@ class BookInfo():
         # if calibre_db:
         # info['calibre'] = calibre_db[info['isbn']]
 
-    def title_and_publication_date(self):
+    def publication_date(self):
+        import datetime
+
+        def get_int(dict, key):
+            try:
+                return int(dict[key])
+            except (KeyError, TypeError):
+                return 1
+
         if not self.goodreads:
-            return self.title
+            return ''
         try:
             work = self.goodreads['book/work']
-            title = '{} {}-{}-{}'.format(self.title,
-                                    work['original_publication_year'],
-                                        work['original_publication_month'],
-                                        work['original_publication_day'])
-            return title
+            return datetime.date(get_int(work, 'original_publication_year'),
+                                        get_int(work, 'original_publication_month'),
+                                        get_int(work, 'original_publication_day'))
         except KeyError as e:
             print(e)
             return self.title

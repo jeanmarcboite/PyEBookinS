@@ -73,6 +73,13 @@ class BookBrowserWidget(QSplitter):
 
         book_tree_view = BookTreeView()
         book_tree_view.clicked[QModelIndex].connect(self.item_selected)
+        book_tree_view.hideColumn(2)
+        print(book_tree_view.isColumnHidden(2))
+        book_tree_view.setColumnHidden(2, True)
+        print(book_tree_view.isColumnHidden(2))
+        book_tree_view.setColumnWidth(0, 300)
+        book_tree_view.setHeaderHidden(True)
+        book_tree_view.setWordWrap(True)
         frame.layout().addWidget(book_tree_view)
         self.addWidget(frame)
 
@@ -93,8 +100,21 @@ class BookBrowserWidget(QSplitter):
             self.add_item(file)
 
     def item_selected(self, index):
-        item = index.model().itemFromIndex(index)
-        # need TODO something for AuthorItem
+        if (index.parent().row() < 0):
+            print('author')
+            item = index.model().item(index.row())
+            print(type(item), item.info)
+        else:
+            print('book')
+            parent_item = index.model().item(index.parent().row())
+            print(type(parent_item), parent_item.info)
+            item = parent_item.child(index.row())
+            print(type(item), item.info)
+        print(index.row(), index.column())
+        print(type(item), item.data())
+        print(type(index.model()))
+        print(type(index.parent()))
+        print(index.parent().row())
         if type(item) is AuthorItem:
             self.info_widget.set_author_info(item.wikipedia)
         if type(item) is BookItem:
@@ -109,6 +129,7 @@ class BookBrowserWidget(QSplitter):
             except (KeyError, AttributeError) as kae:
                 BookBrowserWidget.logger.debug(kae)
         self.book_tree_view.add_item(info)
+        self.book_tree_view.model().sort(2)
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):

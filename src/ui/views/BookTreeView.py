@@ -6,21 +6,30 @@ from PySide2.QtGui import QPixmap, QIcon, QStandardItemModel, \
 from PySide2.QtWidgets import QTreeView
 
 
-class AuthorItem(QStandardItem):
+class AuthorItem():
     def __init__(self, parent, name):
-        super(AuthorItem, self).__init__(name)
-        self.sort_text = ' '.join([name.split(" ")[-1], name])
-        parent.appendRow(self)
+        sort_text = ' '.join([name.split(" ")[-1], name])
+        self.item = QStandardItem(name)
+        self.item.info = name
+        items = [self.item, QStandardItem('date'), QStandardItem(sort_text)]
+        parent.appendRow(items)
+
+    def appendRow(self, items):
+        self.item.appendRow(items)
 
     def __lt__(self, other):
         return self.sort_text < other.sort_text
 
 
-class BookItem(QStandardItem):
+class BookItem():
     def __init__(self, parent, info):
-        super(BookItem, self).__init__(info.title_and_publication_date())
-        self.info = info
-        parent.appendRow(self)
+        pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(info.language[0]))
+        info_item = QStandardItem(info.title)
+        info_item.setIcon(QIcon(pixmap))
+        info_item.info = info
+        publication = str(info.publication_date())
+        items = [info_item, QStandardItem(publication), QStandardItem(publication+info.title)]
+        parent.appendRow(items)
 
 
 def last_first(name):
@@ -31,8 +40,11 @@ class SortFilterProxyModel(QSortFilterProxyModel):
     def __init__(self):
         super(SortFilterProxyModel, self).__init__()
 
-    def itemFromIndex(self, index):
-        return self.sourceModel().itemFromIndex(self.mapToSource(index))
+    def itemFromIndex(self, index: QModelIndex):
+        item = index.model().itemFromIndex(self.mapToSource(index))
+        print(self.sourceModel(), index.model(), item)
+
+        return item
 
     def lessThan(self, source_left: QModelIndex, source_right: QModelIndex):
         return last_first(source_left.data()) < last_first(source_right.data())
@@ -43,13 +55,15 @@ class BookTreeView(QTreeView):
     def __init__(self, **kwargs):
         super(BookTreeView, self).__init__(**kwargs)
         self.item_model = QStandardItemModel()
-        self.item_model.setHorizontalHeaderLabels(["Author"])
+        headerLabels = ["Name", "Date"]
+        self.setColumnHidden(3, True)
+        self.item_model.setHorizontalHeaderLabels(headerLabels)
+        self.hideColumn(1)
         self.authors = {}
-        self.sortByColumn(0, Qt.AscendingOrder)
-        self.setSortingEnabled(True)
-        use_proxy = True
+        use_proxy = False
         if use_proxy:
             proxy = SortFilterProxyModel()
+            self.setSortingEnabled(True)
             proxy.setSourceModel(self.item_model)
             self.setModel(proxy)
         else:
@@ -66,8 +80,7 @@ class BookTreeView(QTreeView):
                 author_item.wikipedia = 'https://en.wikipedia.org/wiki/{}'.format('_'.join(info.author.split()))
                 self.authors[info.author] = author_item
             info_item = BookItem(author_item, info)
-            pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(info.language[0]))
-            info_item.setIcon(QIcon(pixmap))
+
         except (AttributeError, KeyError) as e:
             logger = logging.getLogger('bookinfo')
             logger.debug('Cannot add item {}'.format(str(info)))
