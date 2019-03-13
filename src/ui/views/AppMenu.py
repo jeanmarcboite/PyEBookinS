@@ -52,6 +52,10 @@ class Action:
 
 
     @classmethod
+    def delete_directory(cls):
+        print('delete')
+
+    @classmethod
     def clear(cls):
         print('clear')
 
@@ -69,10 +73,15 @@ class Action:
 
 
 applicationMenu = {
-    'File': [qAction('Open-folder-add-icon.png',
+    'File': [qAction('Misc-New-Database-icon.png',
                  'Add', 'add directory', 'Ctrl+A', Action.add_directory),
-        qAction('Actions-edit-clear-icon.png',
-                     'Clear', 'remove add directories', func=Action.clear),
+             {'delete': [
+                 qAction('Misc-Delete-Database-icon.png',
+                         'Delete', 'delete directory', func=Action.delete_directory),
+
+             ]},
+       qAction('Actions-edit-clear-icon.png',
+                     'Clear', 'remove all directories', func=Action.clear),
         qAction('Actions-application-exit-icon.png',
                      'Quit'),
     ],
@@ -88,7 +97,8 @@ applicationMenu = {
     ]
 }
 
-def add_menu(menuBar, menu = applicationMenu):
+
+def add_menu(menuBar, menu=applicationMenu):
     for key in menu.keys():
         submenu = menuBar.addMenu(key)
         for action in menu[key]:

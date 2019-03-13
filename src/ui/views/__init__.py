@@ -1,17 +1,13 @@
 import confuse
-from PySide2.QtGui import QIcon, QPixmap
-from PySide2.QtWidgets import QMainWindow, QLabel, QVBoxLayout, QWidget, QStatusBar, QPushButton, QAction
-from PySide2.QtCore import Slot
+from PySide2.QtWidgets import QMainWindow, QLabel, QPushButton
+
 from config import AppState
 from .AppMenu import add_menu
-from .SettingsDialog import SettingsDialog
 from .BookBrowserWidget import BookBrowserWidget
+from .SettingsDialog import SettingsDialog
 
 config = AppState().config
 
-class Action(QAction):
-    def __init__(self, **kwargs):
-        super(Action, self).__init__(**kwargs)
 
 class MainWindow(QMainWindow):
     def __init__(self, **kwargs):
