@@ -1,4 +1,5 @@
 import confuse
+from PySide2.QtCore import QSettings, QCoreApplication, QSize, QPoint
 from PySide2.QtWidgets import QMainWindow, QLabel, QPushButton
 
 from config import AppState
@@ -13,8 +14,10 @@ class MainWindow(QMainWindow):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)
         self.setWindowTitle(config['application_name'].as_str())
-        self.resize(config['window']['width'].as_number(), config['window']['height'].as_number())
-
+        QCoreApplication.setOrganizationName('Box')
+        QCoreApplication.setOrganizationDomain('box.com')
+        QCoreApplication.setApplicationName('BookinS')
+        self.setWindowGeometry()
         try:
             add_menu(self.menuBar())
 
@@ -30,3 +33,32 @@ class MainWindow(QMainWindow):
 
     def settings_dialog(self):
         print(SettingsDialog.dialog(self))
+
+    def moveEvent(self, event):
+        rc = super(MainWindow, self).moveEvent(event)
+        settings = QSettings()
+        settings.beginGroup(self.__class__.__name__)
+        settings.setValue('pos', self.pos())
+        settings.endGroup()
+        return rc
+
+    def resizeEvent(self, event):
+        rc = super(MainWindow, self).resizeEvent(event)
+        settings = QSettings()
+        settings.beginGroup(self.__class__.__name__)
+        settings.setValue('size', self.size())
+        settings.endGroup()
+        return rc
+
+    def setWindowGeometry(self):
+        settings = QSettings()
+        settings.beginGroup(self.__class__.__name__)
+        self.resize(settings.value(
+            'size',
+            QSize(config[self.__class__.__name__]['width'].as_number(),
+                  config[self.__class__.__name__]['height'].as_number())))
+        self.move(settings.value(
+            'pos',
+            QPoint(config[self.__class__.__name__]['x'].as_number(),
+                  config[self.__class__.__name__]['y'].as_number())))
+        settings.endGroup()

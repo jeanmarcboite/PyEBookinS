@@ -48,6 +48,8 @@ language_code:
   en: eng
   it: ita
 
-window:
+MainWindow:
   width: 1200
   height: 800
+  x: 76
+  y: 50
