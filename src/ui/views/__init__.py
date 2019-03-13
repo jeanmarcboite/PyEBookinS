@@ -34,26 +34,3 @@ class MainWindow(QMainWindow):
 
     def settings_dialog(self):
         print(SettingsDialog.dialog(self))
-
-    def action(self, pixmap, text, toolTip, shortcut, func):
-        icon = QIcon(QPixmap(pixmap))
-        this = QAction(icon, text, self)
-        this.setToolTip(toolTip)
-        this.setShortcut(shortcut)
-        this.triggered.connect(func)
-
-        return this
-
-    @Slot(str, str)
-    def display_hidden(self, action, arg):
-        print(arg)
-        print(action)
-        print(type(action))
-
-    def action_function(self, action, arg):
-        print(action)
-        print(type(action))
-        print(arg)
-
-    def add_directory(self):
-        print('add')

@@ -1,5 +1,5 @@
 from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QAction
+from PySide2.QtWidgets import QAction, QFileDialog
 
 File = 'File'
 
@@ -41,7 +41,14 @@ class Action:
 
     @classmethod
     def add_directory(cls):
-        print('add_directory')
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOption(QFileDialog.ShowDirsOnly, True)
+        filenames = []
+
+        if dialog.exec_():
+            filenames = dialog.selectedFiles()
+        print(filenames)
 
 
     @classmethod
