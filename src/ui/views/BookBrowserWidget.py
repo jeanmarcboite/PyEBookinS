@@ -94,6 +94,7 @@ class BookBrowserWidget(QSplitter):
     def populate(self):
         for file in self.files:
             self.add_item(file)
+        self.book_tree_view.read_expanded_items()
 
     def item_selected(self, index):
         if (index.parent().row() < 0):

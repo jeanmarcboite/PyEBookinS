@@ -1,6 +1,7 @@
 import logging
+import json
 
-from PySide2.QtCore import Qt, QSortFilterProxyModel, QModelIndex
+from PySide2.QtCore import Qt, QSortFilterProxyModel, QModelIndex, QSettings
 from PySide2.QtGui import QPixmap, QIcon, QStandardItemModel, \
     QStandardItem
 from PySide2.QtWidgets import QTreeView
@@ -75,6 +76,9 @@ class BookTreeView(QTreeView):
         else:
             self.setModel(self.item_model)
 
+        self.collapsed.connect(self._collapsed)
+        self.expanded.connect(self._expanded)
+
     def add_item(self, info):
         try:
             info.title
@@ -92,3 +96,32 @@ class BookTreeView(QTreeView):
             logger = logging.getLogger('bookinfo')
             logger.debug('Cannot add item {}'.format(str(info)))
             logger.error(e)
+
+    def _expanded_items(self):
+        return []
+
+    def read_expanded_items(self):
+        settings = QSettings()
+        settings.beginGroup(self.__class__.__name__)
+        self.expanded_items = settings.value('expanded')
+        try:
+            self.expanded_items = json.loads(settings.value('expanded', None))
+        except (ValueError, TypeError):
+            pass
+
+        for row in self.expanded_items:
+            self.setExpanded(QModelIndex(self.model().index(row, 0)), True)
+
+
+    def save_expanded_items(self):
+        settings = QSettings()
+        settings.beginGroup(self.__class__.__name__)
+        settings.setValue('expanded', json.dumps(self.expanded_items))
+        settings.endGroup()
+
+    def _collapsed(self, item):
+        self.expanded_items.remove(item.row())
+        self.save_expanded_items()
+    def _expanded(self, item):
+        self.expanded_items.append(item.row())
+        self.save_expanded_items()
