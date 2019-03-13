@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 
-from PySide2.QtCore import Qt, QModelIndex
+from PySide2.QtCore import Qt, QModelIndex, QEvent, QSettings
 from PySide2.QtWidgets import QScrollArea, \
     QSplitter, QFrame, QVBoxLayout, QPushButton
 from xdg import BaseDirectory
@@ -47,6 +47,9 @@ class BookBrowserWidget(QSplitter):
         self.populate()
 
         self.info_widget = self.add_info_widget()
+
+        self.set_sizes()
+        self.splitterMoved.connect(self.splitter_moved)
 
     @staticmethod
     def add_calibre_db():
@@ -120,3 +123,17 @@ class BookBrowserWidget(QSplitter):
         for extension in extensions:
             files.extend(Path(dirpath).glob('**/*.' + extension))
         return files
+
+    def splitter_moved(self):
+        settings = QSettings()
+        settings.beginGroup(self.__class__.__name__)
+        settings.setValue('sizes', self.sizes())
+        settings.endGroup()
+
+    def set_sizes(self):
+        settings = QSettings()
+        settings.beginGroup(self.__class__.__name__)
+        sizes = settings.value('sizes', [])
+        if sizes and type(sizes) is list:
+            self.setSizes(list(map(int, sizes)))
+        settings.endGroup()
