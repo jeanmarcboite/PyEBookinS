@@ -3,7 +3,7 @@ from PySide2.QtCore import QSettings, QCoreApplication, QSize, QPoint
 from PySide2.QtWidgets import QMainWindow, QLabel, QPushButton
 
 from config import AppState
-from .AppMenu import add_menu
+from .AppMenu import add_menus
 from .BookBrowserWidget import BookBrowserWidget
 from .SettingsDialog import SettingsDialog
 
@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         QCoreApplication.setApplicationName('BookinS')
         self.setWindowGeometry()
         try:
-            add_menu(self.menuBar())
+            add_menus(self)
 
             self.browser = BookBrowserWidget(parent=self)
             self.setCentralWidget(self.browser)

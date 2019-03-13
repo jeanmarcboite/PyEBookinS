@@ -1,4 +1,4 @@
-from PySide2.QtGui import QIcon
+from PySide2.QtGui import QIcon, QWindow
 from PySide2.QtWidgets import QAction, QFileDialog
 
 File = 'File'
@@ -48,7 +48,9 @@ class Action:
 
         if dialog.exec_():
             filenames = dialog.selectedFiles()
-        print(filenames)
+            action = Action()
+            for filename in filenames:
+                action.window.browser.add_database(filename)
 
 
     @classmethod
@@ -98,7 +100,7 @@ applicationMenu = {
 }
 
 
-def add_menu(menuBar, menu=applicationMenu):
+def add_menu(menuBar, menu):
     for key in menu.keys():
         submenu = menuBar.addMenu(key)
         for action in menu[key]:
@@ -107,3 +109,9 @@ def add_menu(menuBar, menu=applicationMenu):
             else:
                 submenu.addAction(action)
                 action.set_widgets()
+
+
+def add_menus(window: QWindow, menu=applicationMenu):
+    add_menu(window.menuBar(), menu)
+
+    Action().window = window

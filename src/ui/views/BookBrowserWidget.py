@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 
-from PySide2.QtCore import Qt, QModelIndex, QEvent, QSettings
+from PySide2.QtCore import Qt, QModelIndex, QSettings
 from PySide2.QtWidgets import QScrollArea, \
     QSplitter, QFrame, QVBoxLayout, QPushButton
 from xdg import BaseDirectory
@@ -10,7 +10,7 @@ from xdg import BaseDirectory
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import BookInfo
-from src.ui.views.BookTreeView import BookTreeView, BookItem, AuthorItem
+from src.ui.views.BookTreeView import BookTreeView
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
@@ -23,33 +23,29 @@ class BookBrowserWidget(QSplitter):
     def __init__(self, parent=None):
         super(BookBrowserWidget, self).__init__(Qt.Horizontal, parent)
 
-        self.files = []
-        books = config['books']
-        for b in books:
-            book = b.as_str()
-            if os.path.isfile(book):
-                self.files.append(book)
-            elif os.path.isdir(book):
-                self.files.extend(BookBrowserWidget.find_files(book.as_str))
-            else:
-                data_dir = BaseDirectory.save_data_path('{}/{}'.format(config['application_name'],
-                                                                       book))
-                if os.path.isdir(data_dir):
-                    self.files.extend(BookBrowserWidget.find_files(data_dir))
-                else:
-                    BookBrowserWidget.logger.warning("book '%s' not found")
-
-        BookBrowserWidget.logger.info("Import %d files", len(self.files))
-
-        self.calibre_db = self.add_calibre_db()
+        self.files = {}
+        self.calibre = {}
 
         self.book_tree_view = self.add_book_tree_view()
-        self.populate()
 
         self.info_widget = self.add_info_widget()
 
         self.set_sizes()
         self.splitterMoved.connect(self.splitter_moved)
+
+    def add_database(self, database: str):
+        self.files[database] = []
+        if os.path.isfile(database):
+            self.files[database] = [database]
+        elif os.path.isdir(database):
+            self.files[database] = BookBrowserWidget.find_files(database)
+            calibre = os.path.join(database, 'metadata.db')
+            if os.path.isfile(calibre):
+                self.calibre[database] = CalibreDB(database='sqlite:///' + calibre)
+
+        BookBrowserWidget.logger.info("Import %d files", len(self.files[database]))
+
+        self.populate()
 
     @staticmethod
     def add_calibre_db():
@@ -92,9 +88,11 @@ class BookBrowserWidget(QSplitter):
         return info_widget
 
     def populate(self):
-        for file in self.files:
-            self.add_item(file)
-        self.book_tree_view.read_expanded_items()
+        self.book_tree_view.clear()
+        for database in self.files.values():
+            for file in database:
+                self.add_item(file)
+        # self.book_tree_view.read_expanded_items()
 
     def item_selected(self, index):
         if (index.parent().row() < 0):
@@ -108,15 +106,16 @@ class BookBrowserWidget(QSplitter):
     def add_item(self, file):
         info = BookInfo(file)
 
-        if self.calibre_db:
-            try:
-                info.calibre = self.calibre_db[info.ISBN]
-            except (KeyError, AttributeError) as kae:
-                BookBrowserWidget.logger.debug(kae)
+        try:
+            info.calibre = self.calibre_db[info.ISBN]
+        except (KeyError, AttributeError) as kae:
+            BookBrowserWidget.logger.debug(kae)
+
         self.book_tree_view.add_item(info)
         self.book_tree_view.model().sort(2)
         self.book_tree_view.resizeColumnToContents(0)
         self.book_tree_view.hideColumn(2)
+
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
@@ -125,11 +124,13 @@ class BookBrowserWidget(QSplitter):
             files.extend(Path(dirpath).glob('**/*.' + extension))
         return files
 
+
     def splitter_moved(self):
         settings = QSettings()
         settings.beginGroup(self.__class__.__name__)
         settings.setValue('sizes', self.sizes())
         settings.endGroup()
+
 
     def set_sizes(self):
         settings = QSettings()

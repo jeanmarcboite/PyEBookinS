@@ -97,6 +97,9 @@ class BookTreeView(QTreeView):
             logger.debug('Cannot add item {}'.format(str(info)))
             logger.error(e)
 
+    def clear(self):
+        self.item_model.removeRows(0, self.item_model.rowCount())
+
     def _expanded_items(self):
         return []
 
@@ -123,5 +126,6 @@ class BookTreeView(QTreeView):
         self.expanded_items.remove(item.row())
         self.save_expanded_items()
     def _expanded(self, item):
+        self.expanded_items = []
         self.expanded_items.append(item.row())
         self.save_expanded_items()
