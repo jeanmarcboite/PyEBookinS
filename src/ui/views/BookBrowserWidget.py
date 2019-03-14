@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from pathlib import Path
 
 from PySide2.QtCore import Qt, QModelIndex, QSettings
@@ -33,6 +34,8 @@ class BookBrowserWidget(QSplitter):
         self.set_sizes()
         self.splitterMoved.connect(self.splitter_moved)
 
+        self.set_databases()
+
     def append_database(self, database: str):
         self.files[database] = []
         if os.path.isfile(database):
@@ -44,7 +47,8 @@ class BookBrowserWidget(QSplitter):
                 self.calibre[database] = CalibreDB(database='sqlite:///' + calibre)
 
         BookBrowserWidget.logger.info("Import %d files", len(self.files[database]))
-
+        settings = QSettings()
+        settings.setValue('databases', json.dumps([file for file in self.files]))
         self.populate()
 
     def remove_database(self, database: str):
@@ -146,3 +150,9 @@ class BookBrowserWidget(QSplitter):
         if sizes and type(sizes) is list:
             self.setSizes(list(map(int, sizes)))
         settings.endGroup()
+
+    def set_databases(self):
+        settings = QSettings()
+        for database in json.loads(settings.value('databases', '[]')):
+            self.append_database(database)
+        self.populate()

@@ -19,15 +19,16 @@ class MainWindow(QMainWindow):
         QCoreApplication.setApplicationName('BookinS')
         self.setWindowGeometry()
         try:
-            add_menus(self)
-
             self.browser = BookBrowserWidget(parent=self)
+
             self.setCentralWidget(self.browser)
 
             self.button = QPushButton('settings')
             self.statusBar().addWidget(self.button)
             self.statusBar().addWidget(QLabel('status...........................'))
             self.button.clicked.connect(self.settings_dialog)
+
+            add_menus(self)
         except confuse.NotFoundError as e:
             self.setCentralWidget(QLabel('Configuration error: {}'.format(e)))
 

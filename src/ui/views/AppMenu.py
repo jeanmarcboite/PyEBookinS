@@ -73,7 +73,7 @@ class Action:
     def update(self):
         delete = self.window.menuBar().menu['File'].menu['delete']
         delete.clear()
-        for file in self.window.browser.files.values():
+        for file in self.window.browser.files:
             qdelete = delete.addAction(QIcon('../resources/icons/Misc-Delete-Database-icon.png'),
                                        file)
             qdelete.triggered.connect(lambda: self.remove_database(file))
@@ -135,3 +135,4 @@ def add_menus(window: QWindow, menu=applicationMenu):
     add_menu(window.menuBar(), menu)
 
     Action().window = window
+    Action().update()
