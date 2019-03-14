@@ -118,6 +118,8 @@ class BookBrowserWidget(QSplitter):
             self.info_widget.set_book_info(item.info)
 
     def add_item(self, file):
+        self.parent().set_status('Adding {}'.format(file))
+
         info = BookInfo(file)
 
         try:

@@ -19,13 +19,13 @@ class MainWindow(QMainWindow):
         QCoreApplication.setApplicationName('BookinS')
         self.setWindowGeometry()
         try:
+            self.statusLabel = QLabel('status...........................')
+            self.statusBar().addWidget(self.statusLabel)
             self.browser = BookBrowserWidget(parent=self)
 
             self.setCentralWidget(self.browser)
 
             self.button = QPushButton('settings')
-            self.statusBar().addWidget(self.button)
-            self.statusBar().addWidget(QLabel('status...........................'))
             self.button.clicked.connect(self.settings_dialog)
 
             add_menus(self)
@@ -63,3 +63,6 @@ class MainWindow(QMainWindow):
             QPoint(config[self.__class__.__name__]['x'].as_number(),
                   config[self.__class__.__name__]['y'].as_number())))
         settings.endGroup()
+
+    def set_status(self, status: str):
+        self.statusLabel.setText(status)
