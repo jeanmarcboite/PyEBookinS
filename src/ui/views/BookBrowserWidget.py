@@ -1,11 +1,14 @@
 import logging
 import os
 import json
+from datetime import datetime
+import time
 from pathlib import Path
 
-from PySide2.QtCore import Qt, QModelIndex, QSettings
+from PySide2 import QtCore
+from PySide2.QtCore import Qt, QModelIndex, QSettings, Signal, Slot, QObject
 from PySide2.QtWidgets import QScrollArea, \
-    QSplitter, QFrame, QVBoxLayout, QPushButton
+    QSplitter, QFrame, QVBoxLayout, QPushButton, QHBoxLayout
 from xdg import BaseDirectory
 
 from config import AppState
@@ -16,6 +19,28 @@ from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
 
+class QThread1(QtCore.QThread):
+
+    sig1 = Signal(str)
+
+    def __init__(self, parent=None):
+        QtCore.QThread.__init__(self, parent)
+
+    def run(self):
+        self.running = True
+        while self.running:
+            self.sig1.emit(str(datetime.now()))
+            time.sleep(1)
+# Subclassing QObject and using moveToThread
+# http://blog.qt.digia.com/blog/2007/07/05/qthreads-no-longer-abstract
+class SomeObject(QObject):
+
+    finished = Signal(str)
+
+    def __init__(self, input, parent=None):
+        QObject.__init__(self, parent)
+        time.sleep(2)
+        self.finished(input)
 
 # noinspection PyPep8Naming
 class BookBrowserWidget(QSplitter):
@@ -72,9 +97,16 @@ class BookBrowserWidget(QSplitter):
     def add_book_tree_view(self):
         frame = QFrame()
         frame.setLayout(QVBoxLayout())
-        button = QPushButton('fill items')
-        button.clicked.connect(self.populate)
-        frame.layout().addWidget(button)
+        buttons = QHBoxLayout()
+        self.start_button = QPushButton("⯈")
+        self.start_button.clicked.connect(self.start_thread)
+        buttons.addWidget(self.start_button)
+        self.stop_button = QPushButton("⯀")
+        self.stop_button.clicked.connect(self.stop_thread)
+        buttons.addWidget(self.stop_button)
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        frame.layout().addLayout(buttons)
 
         book_tree_view = BookTreeView()
         book_tree_view.clicked[QModelIndex].connect(self.item_selected)
@@ -82,6 +114,23 @@ class BookBrowserWidget(QSplitter):
         self.addWidget(frame)
 
         return book_tree_view
+
+    def start_thread(self):
+        self.parent().set_status(str(datetime.now()))
+        self.thread1 = QThread1()
+        self.thread1.start()
+        self.thread1.sig1.connect(self.on_info)
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+
+    def stop_thread(self):
+        self.thread1.running = False
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+
+    def on_info(self, info):
+        print(type(info))
+        self.parent().set_status(str(info))
 
     def add_info_widget(self):
         info_widget = InfoWidget()
