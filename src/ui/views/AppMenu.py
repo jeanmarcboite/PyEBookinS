@@ -1,7 +1,9 @@
+import json
+from functools import partial
+
+from PySide2.QtCore import QSettings
 from PySide2.QtGui import QIcon, QWindow
 from PySide2.QtWidgets import QAction, QFileDialog
-
-File = 'File'
 
 class qIcon(QIcon):
     def __init__(self, icon, **kwargs):
@@ -44,7 +46,13 @@ class checkableAction(qAction):
 
 
 class Action:
-    _dict = {}
+    FILE = 'File'
+    DELETE = 'Delete'
+    RECENT = 'Recent'
+
+    _dict = {
+        'recent': set()
+    }
 
     def __init__(self):
         self.__dict__ = self._dict
@@ -57,27 +65,41 @@ class Action:
         filenames = []
 
         if dialog.exec_():
-            filenames = dialog.selectedFiles()
-            action = Action()
-            for filename in filenames:
-                action.window.browser.append_database(filename)
-                delete = action.window.menuBar().menu['File'].menu['delete']
-                qdelete = delete.addAction(qIcon('Misc-Delete-Database-icon.png'),
-                                           filename)
-                qdelete.triggered.connect(lambda: action.remove_database(filename))
+            Action().append_databases(dialog.selectedFiles())
+    def append_databases(self, filenames):
+        for filename in filenames:
+            self.window.browser.append_database(filename)
+            self.recent.discard(filename)
+        self.update()
 
     def remove_database(self, filename: str):
         self.window.browser.remove_database(filename)
+        self.add_recent(filename)
+        self.update()
+
+    def init(self):
+        settings = QSettings()
+        for database in json.loads(settings.value('recent', '[]')):
+            self.add_recent(database)
         self.update()
 
     def update(self):
-        delete = self.window.menuBar().menu['File'].menu['delete']
+        delete = self.window.menuBar().menu[Action.FILE].menu[Action.DELETE]
         delete.clear()
         for file in self.window.browser.files:
             qdelete = delete.addAction(QIcon('../resources/icons/Misc-Delete-Database-icon.png'),
                                        file)
-            qdelete.triggered.connect(lambda: self.remove_database(file))
+            qdelete.triggered.connect(partial(self.remove_database, file))
+        recent = self.window.menuBar().menu[Action.FILE].menu[Action.RECENT]
+        recent.clear()
+        for file in self.recent:
+            qrecent = recent.addAction(qIcon('Folder-Add-icon.png'), file)
+            qrecent.triggered.connect(partial(self.append_databases, [file]))
+        settings = QSettings()
+        settings.setValue('recent', json.dumps([r for r in self.recent]))
 
+    def add_recent(self, file):
+        self.recent.add(file)
     @classmethod
     def clear(cls):
         Action().window.browser.clear()
@@ -103,7 +125,8 @@ class Action:
 applicationMenu = {
     'File': [qAction('Misc-New-Database-icon.png',
                      'Add', 'add directory', 'Ctrl+A', Action.append_database),
-             {'delete': []},
+             {Action.DELETE: [],
+              Action.RECENT: []},
              qAction('Actions-edit-clear-icon.png',
                      'Clear', 'remove all directories', func=Action.clear),
              qAction('Actions-application-exit-icon.png',
@@ -139,4 +162,4 @@ def add_menus(window: QWindow, menu=applicationMenu):
     add_menu(window.menuBar(), menu)
 
     Action().window = window
-    Action().update()
+    Action().init()

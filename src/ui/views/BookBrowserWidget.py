@@ -47,8 +47,6 @@ class BookBrowserWidget(QSplitter):
                 self.calibre[database] = CalibreDB(database='sqlite:///' + calibre)
 
         BookBrowserWidget.logger.info("Import %d files", len(self.files[database]))
-        settings = QSettings()
-        settings.setValue('databases', json.dumps([file for file in self.files]))
         self.populate()
 
     def remove_database(self, database: str):
@@ -106,6 +104,8 @@ class BookBrowserWidget(QSplitter):
         for database in self.files.values():
             for file in database:
                 self.add_item(file)
+        settings = QSettings()
+        settings.setValue('databases', json.dumps([file for file in self.files]))
         # self.book_tree_view.read_expanded_items()
 
     def item_selected(self, index):
