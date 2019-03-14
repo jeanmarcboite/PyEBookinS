@@ -7,7 +7,7 @@ from PySide2.QtGui import QPixmap, QIcon, QStandardItemModel, \
 from PySide2.QtWidgets import QTreeView
 
 
-class AuthorItem():
+class AuthorItem:
     def __init__(self, parent, name):
         sort_text = ' '.join([name.split(" ")[-1], name])
         self.name = name
@@ -30,7 +30,7 @@ class AuthorItem():
         return self.sort_text < other.sort_text
 
 
-class BookItem():
+class BookItem:
     def __init__(self, parent, info):
         pixmap = QPixmap("../resources/icons/{}-flag-small.png".format(info.language[0]))
         item = QStandardItem(info.title)
@@ -57,7 +57,6 @@ class SortFilterProxyModel(QSortFilterProxyModel):
 
     def lessThan(self, source_left: QModelIndex, source_right: QModelIndex):
         return last_first(source_left.data()) < last_first(source_right.data())
-
 
 
 class BookTreeView(QTreeView):
@@ -88,9 +87,11 @@ class BookTreeView(QTreeView):
                 author_item = AuthorItem(self.item_model.invisibleRootItem(),
                                          info.author)
                 self.authors[info.author] = author_item
+
             if author_item.language is None:
                 author_item.language = info.language[0]
-            info_item = BookItem(author_item, info)
+
+            BookItem(author_item, info)
 
         except (AttributeError, KeyError) as e:
             logger = logging.getLogger('bookinfo')
@@ -98,6 +99,7 @@ class BookTreeView(QTreeView):
             logger.error(e)
 
     def clear(self):
+        self.authors = {}
         self.item_model.removeRows(0, self.item_model.rowCount())
 
     def _expanded_items(self):
@@ -115,7 +117,6 @@ class BookTreeView(QTreeView):
         for row in self.expanded_items:
             self.setExpanded(QModelIndex(self.model().index(row, 0)), True)
 
-
     def save_expanded_items(self):
         settings = QSettings()
         settings.beginGroup(self.__class__.__name__)
@@ -125,6 +126,7 @@ class BookTreeView(QTreeView):
     def _collapsed(self, item):
         self.expanded_items.remove(item.row())
         self.save_expanded_items()
+
     def _expanded(self, item):
         self.expanded_items = []
         self.expanded_items.append(item.row())

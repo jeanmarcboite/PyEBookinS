@@ -33,7 +33,7 @@ class BookBrowserWidget(QSplitter):
         self.set_sizes()
         self.splitterMoved.connect(self.splitter_moved)
 
-    def add_database(self, database: str):
+    def append_database(self, database: str):
         self.files[database] = []
         if os.path.isfile(database):
             self.files[database] = [database]
@@ -45,6 +45,10 @@ class BookBrowserWidget(QSplitter):
 
         BookBrowserWidget.logger.info("Import %d files", len(self.files[database]))
 
+        self.populate()
+
+    def remove_database(self, database: str):
+        del self.files[database]
         self.populate()
 
     @staticmethod
@@ -87,6 +91,12 @@ class BookBrowserWidget(QSplitter):
 
         return info_widget
 
+    def clear(self):
+        self.book_tree_view.clear()
+        files = self.files
+        self.files = {}
+        return files
+
     def populate(self):
         self.book_tree_view.clear()
         for database in self.files.values():
@@ -116,7 +126,6 @@ class BookBrowserWidget(QSplitter):
         self.book_tree_view.resizeColumnToContents(0)
         self.book_tree_view.hideColumn(2)
 
-
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
         files = []
@@ -124,13 +133,11 @@ class BookBrowserWidget(QSplitter):
             files.extend(Path(dirpath).glob('**/*.' + extension))
         return files
 
-
     def splitter_moved(self):
         settings = QSettings()
         settings.beginGroup(self.__class__.__name__)
         settings.setValue('sizes', self.sizes())
         settings.endGroup()
-
 
     def set_sizes(self):
         settings = QSettings()

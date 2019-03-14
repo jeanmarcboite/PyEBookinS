@@ -3,6 +3,11 @@ from PySide2.QtWidgets import QAction, QFileDialog
 
 File = 'File'
 
+class qIcon(QIcon):
+    def __init__(self, icon, **kwargs):
+        super(qIcon, self).__init__('../resources/icons/' + icon, **kwargs)
+
+
 class qAction(QAction):
     def __init__(self, icon, text, tooltip=None, shortcut=None, func=None, **kwargs):
         super(qAction, self).__init__(text, **kwargs)
@@ -12,9 +17,10 @@ class qAction(QAction):
         self._tooltip = tooltip
         self._shortcut = shortcut
         self._func = func
+
     def set_widgets(self):
         if self._icon:
-            self.setIcon(QIcon('../resources/icons/' + self._icon))
+            self.setIcon(qIcon(self._icon))
         self.setToolTip(self._tooltip)
         if self._shortcut:
             self.setShortcut(self._shortcut)
@@ -23,15 +29,19 @@ class qAction(QAction):
             self.triggered.connect(self._func)
         else:
             self.set_default()
+
     def set_default(self):
-            self.triggered.connect(Action.default)
+        self.triggered.connect(Action.default)
+
 
 class checkableAction(qAction):
     def __init__(self, *args, **kwargs):
         super(checkableAction, self).__init__(*args, **kwargs)
         self.setCheckable(True)
+
     def set_default(self):
-            self.triggered.connect(Action.checkable)
+        self.triggered.connect(Action.checkable)
+
 
 class Action:
     _dict = {}
@@ -40,7 +50,7 @@ class Action:
         self.__dict__ = self._dict
 
     @classmethod
-    def add_directory(cls):
+    def append_database(cls):
         dialog = QFileDialog()
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly, True)
@@ -50,16 +60,28 @@ class Action:
             filenames = dialog.selectedFiles()
             action = Action()
             for filename in filenames:
-                action.window.browser.add_database(filename)
+                action.window.browser.append_database(filename)
+                delete = action.window.menuBar().menu['File'].menu['delete']
+                qdelete = delete.addAction(qIcon('Misc-Delete-Database-icon.png'),
+                                           filename)
+                qdelete.triggered.connect(lambda: action.remove_database(filename))
 
+    def remove_database(self, filename: str):
+        self.window.browser.remove_database(filename)
+        self.update()
 
-    @classmethod
-    def delete_directory(cls):
-        print('delete')
+    def update(self):
+        delete = self.window.menuBar().menu['File'].menu['delete']
+        delete.clear()
+        for file in self.window.browser.files.values():
+            qdelete = delete.addAction(QIcon('../resources/icons/Misc-Delete-Database-icon.png'),
+                                       file)
+            qdelete.triggered.connect(lambda: self.remove_database(file))
 
     @classmethod
     def clear(cls):
-        print('clear')
+        Action().window.browser.clear()
+        Action().update()
 
     @classmethod
     def default(cls):
@@ -76,33 +98,31 @@ class Action:
 
 applicationMenu = {
     'File': [qAction('Misc-New-Database-icon.png',
-                 'Add', 'add directory', 'Ctrl+A', Action.add_directory),
-             {'delete': [
-                 qAction('Misc-Delete-Database-icon.png',
-                         'Delete', 'delete directory', func=Action.delete_directory),
-
-             ]},
-       qAction('Actions-edit-clear-icon.png',
+                     'Add', 'add directory', 'Ctrl+A', Action.append_database),
+             {'delete': []},
+             qAction('Actions-edit-clear-icon.png',
                      'Clear', 'remove all directories', func=Action.clear),
-        qAction('Actions-application-exit-icon.png',
+             qAction('Actions-application-exit-icon.png',
                      'Quit'),
-    ],
+             ],
     'View': [checkableAction(None, 'check')],
     'Subs': [
-        qAction(None, 'Params', func=(lambda action='yy', arg='xx': Action.funWithParams(action,arg))),
+        qAction(None, 'Params', func=(lambda action='yy', arg='xx': Action.funWithParams(action, arg))),
         checkableAction(None, 'check'),
         {'SubSub': [
             checkableAction(None, 'check'),
             {'subsubsub': [qAction('Open-folder-add-icon.png',
-                 'Add', 'add directory', 'Ctrl+A', Action.add_directory)]}
+                                   'Add', 'add directory', 'Ctrl+A', Action.append_database)]}
         ]}
     ]
 }
 
 
 def add_menu(menuBar, menu):
+    menuBar.menu = {}
     for key in menu.keys():
         submenu = menuBar.addMenu(key)
+        menuBar.menu[key] = submenu
         for action in menu[key]:
             if isinstance(action, dict):
                 add_menu(submenu, action)
