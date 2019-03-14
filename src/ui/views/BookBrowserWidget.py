@@ -20,7 +20,6 @@ from src.ui.views.InfoWidget import InfoWidget
 config = AppState().config
 
 class QThread1(QtCore.QThread):
-
     sig1 = Signal(str)
 
     def __init__(self, parent=None):
@@ -33,14 +32,19 @@ class QThread1(QtCore.QThread):
             time.sleep(1)
 # Subclassing QObject and using moveToThread
 # http://blog.qt.digia.com/blog/2007/07/05/qthreads-no-longer-abstract
-class SomeObject(QObject):
-
-    finished = Signal(str)
+class Worker(QObject):
+    count = 4
+    info = Signal(str)
+    finished = Signal()
 
     def __init__(self, input, parent=None):
         QObject.__init__(self, parent)
-        time.sleep(2)
-        self.finished(input)
+        self.input = input
+
+    def run(self):
+        self.count += 1
+        self.info.emit(self.input + str(self.count))
+        self.finished.emit()
 
 # noinspection PyPep8Naming
 class BookBrowserWidget(QSplitter):
@@ -98,6 +102,7 @@ class BookBrowserWidget(QSplitter):
         frame = QFrame()
         frame.setLayout(QVBoxLayout())
         buttons = QHBoxLayout()
+        self.worker = Worker('worker..')
         self.start_button = QPushButton("⯈")
         self.start_button.clicked.connect(self.start_thread)
         buttons.addWidget(self.start_button)
@@ -116,6 +121,14 @@ class BookBrowserWidget(QSplitter):
         return book_tree_view
 
     def start_thread(self):
+        self.thread = QtCore.QThread()
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.info.connect(self.on_info)
+        self.thread.started.connect(self.worker.run)
+        self.thread.finished.connect(self.stop_thread)
+        self.thread.start()
+
+    def start_thread1(self):
         self.parent().set_status(str(datetime.now()))
         self.thread1 = QThread1()
         self.thread1.start()
@@ -124,12 +137,15 @@ class BookBrowserWidget(QSplitter):
         self.stop_button.setEnabled(True)
 
     def stop_thread(self):
-        self.thread1.running = False
+        try:
+            self.thread1.running = False
+        except:
+            pass
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
 
     def on_info(self, info):
-        print(type(info))
+        print(info)
         self.parent().set_status(str(info))
 
     def add_info_widget(self):
