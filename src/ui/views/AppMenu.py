@@ -84,6 +84,10 @@ class Action:
         Action().update()
 
     @classmethod
+    def quit(cls):
+        Action().window.close()
+
+    @classmethod
     def default(cls):
         print('default')
 
@@ -103,7 +107,7 @@ applicationMenu = {
              qAction('Actions-edit-clear-icon.png',
                      'Clear', 'remove all directories', func=Action.clear),
              qAction('Actions-application-exit-icon.png',
-                     'Quit'),
+                     'Quit', func=Action.quit),
              ],
     'View': [checkableAction(None, 'check')],
     'Subs': [
