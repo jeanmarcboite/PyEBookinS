@@ -13,38 +13,29 @@ from xdg import BaseDirectory
 
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
-from src.bookinfo.ebook import BookInfo
+from src.bookinfo.ebook import BookInfo, book_info
 from src.ui.views.BookTreeView import BookTreeView
 from src.ui.views.InfoWidget import InfoWidget
 
 config = AppState().config
 
-class QThread1(QtCore.QThread):
-    sig1 = Signal(str)
 
-    def __init__(self, parent=None):
-        QtCore.QThread.__init__(self, parent)
-
-    def run(self):
-        self.running = True
-        while self.running:
-            self.sig1.emit(str(datetime.now()))
-            time.sleep(1)
-# Subclassing QObject and using moveToThread
-# http://blog.qt.digia.com/blog/2007/07/05/qthreads-no-longer-abstract
 class Worker(QObject):
-    count = 4
     info = Signal(str)
     finished = Signal()
 
-    def __init__(self, input, parent=None):
+    def __init__(self, parent=None):
         QObject.__init__(self, parent)
-        self.input = input
+        self.files = []
 
     def run(self):
-        self.count += 1
-        self.info.emit(self.input + str(self.count))
+        print('run worker for {} files'.format(len(self.files)))
+        for file in self.files:
+            book_info(file)
+            print('emit', file)
+            self.info.emit(str(file))
         self.finished.emit()
+
 
 # noinspection PyPep8Naming
 class BookBrowserWidget(QSplitter):
@@ -63,6 +54,9 @@ class BookBrowserWidget(QSplitter):
         self.set_sizes()
         self.splitterMoved.connect(self.splitter_moved)
 
+        self.worker = Worker()
+        self.thread = QtCore.QThread()
+
         self.set_databases()
 
     def append_database(self, database: str):
@@ -76,7 +70,6 @@ class BookBrowserWidget(QSplitter):
                 self.calibre[database] = CalibreDB(database='sqlite:///' + calibre)
 
         BookBrowserWidget.logger.info("Import %d files", len(self.files[database]))
-        self.populate()
 
     def remove_database(self, database: str):
         del self.files[database]
@@ -102,9 +95,9 @@ class BookBrowserWidget(QSplitter):
         frame = QFrame()
         frame.setLayout(QVBoxLayout())
         buttons = QHBoxLayout()
-        self.worker = Worker('worker..')
+
         self.start_button = QPushButton("⯈")
-        self.start_button.clicked.connect(self.start_thread)
+        #self.start_button.clicked.connect(self.start_thread)
         buttons.addWidget(self.start_button)
         self.stop_button = QPushButton("⯀")
         self.stop_button.clicked.connect(self.stop_thread)
@@ -120,32 +113,12 @@ class BookBrowserWidget(QSplitter):
 
         return book_tree_view
 
-    def start_thread(self):
-        self.thread = QtCore.QThread()
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.info.connect(self.on_info)
-        self.thread.started.connect(self.worker.run)
-        self.thread.finished.connect(self.stop_thread)
-        self.thread.start()
-
-    def start_thread1(self):
-        self.parent().set_status(str(datetime.now()))
-        self.thread1 = QThread1()
-        self.thread1.start()
-        self.thread1.sig1.connect(self.on_info)
-        self.start_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
-
     def stop_thread(self):
-        try:
-            self.thread1.running = False
-        except:
-            pass
+        print('stop thread')
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
 
     def on_info(self, info):
-        print(info)
         self.parent().set_status(str(info))
 
     def add_info_widget(self):
@@ -165,10 +138,22 @@ class BookBrowserWidget(QSplitter):
         return files
 
     def populate(self):
+        print('populate')
         self.book_tree_view.clear()
+
+        files = []
         for database in self.files.values():
-            for file in database:
-                self.add_item(file)
+            files.extend(database)
+        print(files)
+        print(self.thread.isRunning())
+        self.worker.files = files
+        self.worker.moveToThread(self.thread)
+        self.worker.info.connect(self.on_item_available)
+        self.worker.finished.connect(self.thread.quit)
+        self.thread.started.connect(self.worker.run)
+        self.thread.finished.connect(self.on_thread_finished())
+        self.thread.start()
+
         settings = QSettings()
         settings.setValue('databases', json.dumps([file for file in self.files]))
         # self.book_tree_view.read_expanded_items()
@@ -181,10 +166,11 @@ class BookBrowserWidget(QSplitter):
             parent_item = index.model().item(index.parent().row())
             item = parent_item.child(index.row())
             self.info_widget.set_book_info(item.info)
-
-    def add_item(self, file):
-        self.parent().set_status('Adding {}'.format(file))
-
+    def on_thread_finished(self):
+        self.logger.debug('thread finished')
+        print('on finished')
+    def on_item_available(self, file):
+        print('got', file)
         info = BookInfo(file)
 
         try:
@@ -196,6 +182,7 @@ class BookBrowserWidget(QSplitter):
         self.book_tree_view.model().sort(2)
         self.book_tree_view.resizeColumnToContents(0)
         self.book_tree_view.hideColumn(2)
+        self.repaint()
 
     @staticmethod
     def find_files(dirpath, extensions=AppState().config['ebook_extensions'].get()):
@@ -219,6 +206,7 @@ class BookBrowserWidget(QSplitter):
         settings.endGroup()
 
     def set_databases(self):
+        print('set databases')
         settings = QSettings()
         for database in json.loads(settings.value('databases', '[]')):
             self.append_database(database)

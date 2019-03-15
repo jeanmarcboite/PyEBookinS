@@ -124,10 +124,12 @@ class BookTreeView(QTreeView):
         settings.endGroup()
 
     def _collapsed(self, item):
+        return
         self.expanded_items.remove(item.row())
         self.save_expanded_items()
 
     def _expanded(self, item):
+        return
         self.expanded_items = []
         self.expanded_items.append(item.row())
         self.save_expanded_items()

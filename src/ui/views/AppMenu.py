@@ -70,6 +70,7 @@ class Action:
         for filename in filenames:
             self.window.browser.append_database(filename)
             self.recent.discard(filename)
+        self.window.browser.populate()
         self.update()
 
     def remove_database(self, filename: str):
