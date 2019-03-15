@@ -5,6 +5,7 @@ from PySide2.QtCore import QSettings
 from PySide2.QtGui import QIcon, QWindow
 from PySide2.QtWidgets import QAction, QFileDialog
 
+
 class qIcon(QIcon):
     def __init__(self, icon, **kwargs):
         super(qIcon, self).__init__('../resources/icons/' + icon, **kwargs)
@@ -33,7 +34,7 @@ class qAction(QAction):
             self.set_default()
 
     def set_default(self):
-        self.triggered.connect(Action.default)
+        self.triggered.connect(AppMenu.default)
 
 
 class checkableAction(qAction):
@@ -42,11 +43,12 @@ class checkableAction(qAction):
         self.setCheckable(True)
 
     def set_default(self):
-        self.triggered.connect(Action.checkable)
+        self.triggered.connect(AppMenu.checkable)
 
 
-class Action:
+class AppMenu:
     FILE = 'File'
+    ADD = 'Add'
     DELETE = 'Delete'
     RECENT = 'Recent'
 
@@ -54,8 +56,59 @@ class Action:
         'recent': set()
     }
 
+    @staticmethod
+    def menu_items():
+        return {
+            AppMenu.FILE: [qAction('Misc-New-Database-icon.png',
+                           AppMenu.ADD, 'add directory', 'Ctrl+A', AppMenu.append_database),
+                   {AppMenu.DELETE: [],
+                    AppMenu.RECENT: []},
+                   qAction('Actions-edit-clear-icon.png',
+                           'Clear', 'remove all directories', func=AppMenu.clear),
+                   qAction('Actions-application-exit-icon.png',
+                           'Quit', func=AppMenu.quit),
+                   ],
+            'View': [checkableAction(None, 'check')],
+            'Subs': [
+                qAction(None, 'Params', func=(lambda action='yy', arg='xx': AppMenu.funWithParams(action, arg))),
+                checkableAction(None, 'check'),
+                {'SubSub': [
+                    checkableAction(None, 'check'),
+                    {'subsubsub': [qAction('Open-folder-add-icon.png',
+                                           'Add', 'add directory', 'Ctrl+A', AppMenu.append_database)]}
+                ]}
+            ]
+        }
+
     def __init__(self):
         self.__dict__ = self._dict
+
+    def add_menu(self, menuBar, menu):
+        for key in menu.keys():
+            submenu = menuBar.addMenu(key)
+            submenu.menu = {}
+            menuBar.menu[key] = submenu
+            for action in menu[key]:
+                if isinstance(action, dict):
+                    self.add_menu(submenu, action)
+                else:
+                    submenu.addAction(action)
+                    menuBar.menu[key].menu[action.text()] = action
+                    action.set_widgets()
+
+    def init(self, window: QWindow, menu=None):
+        if menu is None:
+            menu = AppMenu.menu_items()
+        window.menuBar().menu = {}
+        self.add_menu(window.menuBar(), menu)
+
+        AppMenu().window = window
+
+    def init_databases(self):
+        settings = QSettings()
+        for database in json.loads(settings.value('recent', '[]')):
+            self.add_recent(database)
+        self.update()
 
     @classmethod
     def append_database(cls):
@@ -65,7 +118,8 @@ class Action:
         filenames = []
 
         if dialog.exec_():
-            Action().append_databases(dialog.selectedFiles())
+            AppMenu().append_databases(dialog.selectedFiles())
+
     def append_databases(self, filenames):
         for filename in filenames:
             self.window.browser.append_database(filename)
@@ -78,20 +132,19 @@ class Action:
         self.add_recent(filename)
         self.update()
 
-    def init(self):
-        settings = QSettings()
-        for database in json.loads(settings.value('recent', '[]')):
-            self.add_recent(database)
-        self.update()
+    def enable_add(self, enable):
+        print('set enabled', enable)
+        for item in [AppMenu.ADD, AppMenu.DELETE, AppMenu.RECENT]:
+            self.window.menuBar().menu[AppMenu.FILE].menu[item].setEnabled(enable)
 
     def update(self):
-        delete = self.window.menuBar().menu[Action.FILE].menu[Action.DELETE]
+        delete = self.window.menuBar().menu[AppMenu.FILE].menu[AppMenu.DELETE]
         delete.clear()
         for file in self.window.browser.files:
             qdelete = delete.addAction(QIcon('../resources/icons/Misc-Delete-Database-icon.png'),
                                        file)
             qdelete.triggered.connect(partial(self.remove_database, file))
-        recent = self.window.menuBar().menu[Action.FILE].menu[Action.RECENT]
+        recent = self.window.menuBar().menu[AppMenu.FILE].menu[AppMenu.RECENT]
         recent.clear()
         for file in self.recent:
             qrecent = recent.addAction(qIcon('Folder-Add-icon.png'), file)
@@ -101,14 +154,15 @@ class Action:
 
     def add_recent(self, file):
         self.recent.add(file)
+
     @classmethod
     def clear(cls):
-        Action().window.browser.clear()
-        Action().update()
+        AppMenu().window.browser.clear()
+        AppMenu().update()
 
     @classmethod
     def quit(cls):
-        Action().window.close()
+        AppMenu().window.close()
 
     @classmethod
     def default(cls):
@@ -121,46 +175,3 @@ class Action:
     @classmethod
     def funWithParams(cls, *args):
         print(args)
-
-
-applicationMenu = {
-    'File': [qAction('Misc-New-Database-icon.png',
-                     'Add', 'add directory', 'Ctrl+A', Action.append_database),
-             {Action.DELETE: [],
-              Action.RECENT: []},
-             qAction('Actions-edit-clear-icon.png',
-                     'Clear', 'remove all directories', func=Action.clear),
-             qAction('Actions-application-exit-icon.png',
-                     'Quit', func=Action.quit),
-             ],
-    'View': [checkableAction(None, 'check')],
-    'Subs': [
-        qAction(None, 'Params', func=(lambda action='yy', arg='xx': Action.funWithParams(action, arg))),
-        checkableAction(None, 'check'),
-        {'SubSub': [
-            checkableAction(None, 'check'),
-            {'subsubsub': [qAction('Open-folder-add-icon.png',
-                                   'Add', 'add directory', 'Ctrl+A', Action.append_database)]}
-        ]}
-    ]
-}
-
-
-def add_menu(menuBar, menu):
-    menuBar.menu = {}
-    for key in menu.keys():
-        submenu = menuBar.addMenu(key)
-        menuBar.menu[key] = submenu
-        for action in menu[key]:
-            if isinstance(action, dict):
-                add_menu(submenu, action)
-            else:
-                submenu.addAction(action)
-                action.set_widgets()
-
-
-def add_menus(window: QWindow, menu=applicationMenu):
-    add_menu(window.menuBar(), menu)
-
-    Action().window = window
-    Action().init()

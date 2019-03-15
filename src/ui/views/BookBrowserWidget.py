@@ -14,6 +14,7 @@ from xdg import BaseDirectory
 from config import AppState
 from src.bookinfo.calibredb import CalibreDB
 from src.bookinfo.ebook import BookInfo, book_info
+from src.ui.views.AppMenu import AppMenu
 from src.ui.views.BookTreeView import BookTreeView
 from src.ui.views.InfoWidget import InfoWidget
 
@@ -29,10 +30,8 @@ class Worker(QObject):
         self.files = []
 
     def run(self):
-        print('run worker for {} files'.format(len(self.files)))
         for file in self.files:
             book_info(file)
-            print('emit', file)
             self.info.emit(str(file))
         self.finished.emit()
 
@@ -57,6 +56,7 @@ class BookBrowserWidget(QSplitter):
         self.worker = Worker()
         self.thread = QtCore.QThread()
 
+        self.enable_add = True
         self.set_databases()
 
     def append_database(self, database: str):
@@ -138,20 +138,19 @@ class BookBrowserWidget(QSplitter):
         return files
 
     def populate(self):
-        print('populate')
+        self.enable_add = False
         self.book_tree_view.clear()
 
         files = []
         for database in self.files.values():
             files.extend(database)
-        print(files)
-        print(self.thread.isRunning())
         self.worker.files = files
         self.worker.moveToThread(self.thread)
         self.worker.info.connect(self.on_item_available)
         self.worker.finished.connect(self.thread.quit)
         self.thread.started.connect(self.worker.run)
         self.thread.finished.connect(self.on_thread_finished())
+        AppMenu().enable_add(self.enable_add)
         self.thread.start()
 
         settings = QSettings()
@@ -166,9 +165,13 @@ class BookBrowserWidget(QSplitter):
             parent_item = index.model().item(index.parent().row())
             item = parent_item.child(index.row())
             self.info_widget.set_book_info(item.info)
+
     def on_thread_finished(self):
         self.logger.debug('thread finished')
-        print('on finished')
+        print('thread fini')
+        self.enable_add = True
+        AppMenu().enable_add(self.enable_add)
+
     def on_item_available(self, file):
         print('got', file)
         info = BookInfo(file)
