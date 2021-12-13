@@ -26,7 +26,7 @@ jmespath==0.9.4
 joblib==0.13.1
 langdetect==1.0.7
 lazy==1.4
-lxml==4.3.1
+lxml==4.6.5
 parso==0.3.4
 pexpect==4.6.0
 pickleshare==0.7.5
