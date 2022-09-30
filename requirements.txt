@@ -23,7 +23,7 @@ ipython-genutils==0.2.0
 isbnlib==3.9.5
 jedi==0.13.2
 jmespath==0.9.4
-joblib==0.13.1
+joblib==1.2.0
 langdetect==1.0.7
 lazy==1.4
 lxml==4.3.1
